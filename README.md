@@ -1,6 +1,7 @@
 # MADGEN: Mass-Spec attends to De Novo Molecular generation
 
 <a href="https://openreview.net/forum?id=770DetV8He"><img src="https://img.shields.io/badge/ICLR-2025-brown.svg" height=22.5></a>
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/madgen-mass-spec-attends-to-de-novo-molecular/on-massspecgym)](https://paperswithcode.com/sota/on-massspecgym?p=madgen-mass-spec-attends-to-de-novo-molecular)
 
 Official implementation of [**MADGEN: Mass-Spec attends to De Novo Molecular generation**](https://openreview.net/forum?id=78tc3EiUrN&noteId=6vcJK7gC1B) by Yinkai Wang, Xiaohui Chen, Liping Liu, and Soha Hassoun.
 
