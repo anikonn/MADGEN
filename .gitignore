@@ -1,0 +1,15 @@
+.idea
+__pycache__
+**/*.ckpt
+logs/*
+checkpoints/*
+data/*/*/*.pt
+data/*/*/*.pkl
+data/*/*/*.tsv
+data/*/*/*.csv
+dataset/*
+samples/*
+samples/*/*
+*.txt
+*.out
+*.zip
