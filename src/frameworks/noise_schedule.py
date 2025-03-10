@@ -70,7 +70,7 @@ class PredefinedNoiseScheduleDiscrete(torch.nn.Module):
         log_alpha_bar = torch.cumsum(log_alpha, dim=0)
         self.alphas_bar = torch.exp(log_alpha_bar)
         if torch.cuda.is_available():
-            self.alphas_bar = self.alphas_bar.to('cuda:0')
+            self.alphas_bar = self.alphas_bar.cuda()
 
         # print(f"[Noise schedule: {noise_schedule}] alpha_bar:", self.alphas_bar)
 
@@ -84,7 +84,7 @@ class PredefinedNoiseScheduleDiscrete(torch.nn.Module):
         assert int(t_normalized is None) + int(t_int is None) == 1
         if t_int is None:
             t_int = torch.round(t_normalized * self.timesteps)
-        return self.alphas_bar[t_int.long()]
+        return self.alphas_bar[t_int.long().to(self.alphas_bar.device)]
 
 
 class DiscreteUniformTransition:

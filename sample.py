@@ -174,7 +174,7 @@ def main(args):
             true_mol = build_molecule(
                 true_mol[0], true_mol[1], dataset_infos.atom_decoder
             )
-            true_smi = Chem.MolToSmiles(true_mol)
+            true_smi = Chem.MolToSmiles(true_mol, canonical=True)
 
             product_mol = build_molecule(
                 product_mol[0], product_mol[1], dataset_infos.atom_decoder

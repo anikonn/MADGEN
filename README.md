@@ -45,6 +45,28 @@ CUDA_VISIBLE_DEVICES=1 python sample.py \
        --sampling_seed 42
 ```
 
+python sample.py \
+       --config configs/canopus.yaml \
+       --checkpoint /cluster/tufts/liulab/yiwan01/MADGEN/checkpoints/madgen_canopus_100steps_03_03_15_45_16/last.ckpt \
+       --samples samples \
+       --model Madgen \
+       --mode test \
+       --n_samples 1 \
+       --n_steps 100 \
+       --table_name canopus_final \
+       --sampling_seed 42
+
+python sample.py \
+       --config configs/msgym.yaml \
+       --checkpoint /cluster/tufts/liulab/yiwan01/MADGEN/checkpoints/madgen_msgym_final_100steps_03_03_22_55_23/last.ckpt \
+       --samples samples \
+       --model Madgen \
+       --mode test \
+       --n_samples 1 \
+       --n_steps 100 \
+       --table_name msgym_final_1 \
+       --sampling_seed 42
+
 ## Evaluation
 
 To run the evaluation, you now need to provide the file path as an argument:

@@ -311,7 +311,7 @@ class MarkovBridge(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         self.val_counter += 1
-        if self.val_counter % self.sample_every_val == 0:
+        if self.val_counter % self.sample_every_val == 0 or self.val_counter == 1:
             self.sample()
             self.trainer.save_checkpoint(os.path.join(self.checkpoints_dir, 'last.ckpt'))
 
@@ -425,7 +425,7 @@ class MarkovBridge(pl.LightningModule):
         E_t = F.one_hot(sampled_t.E, num_classes=self.Edim_output)
         assert (X.shape == X_t.shape) and (E.shape == E_t.shape)
 
-        z_t = utils.PlaceHolder(X=X, E=E_t, y=y).type_as(X_t).mask(node_mask)
+        z_t = utils.PlaceHolder(X=X_t, E=E_t, y=y).type_as(X_t).mask(node_mask)
 
         noisy_data = {
             't_int': t_int,
@@ -616,7 +616,7 @@ class MarkovBridge(pl.LightningModule):
 
             # Masking unchanged part
             if self.fix_product_nodes:
-                # sampled_s.X = product.X
+                sampled_s.X = product.X
                 sampled_s.E = sampled_s.E * modifiable_edges  + product.E * fixed_edges
                 sampled_s = sampled_s.mask(node_mask)
                 discrete_sampled_s = sampled_s.clone()
@@ -625,9 +625,9 @@ class MarkovBridge(pl.LightningModule):
             X, E, y = sampled_s.X, sampled_s.E, sampled_s.y
 
             # Save the first keep_chain graphs
-            write_index = (s_int * number_chain_steps_to_save) // self.T
-            chain_X[write_index] = discrete_sampled_s.X[:keep_chain]
-            chain_E[write_index] = discrete_sampled_s.E[:keep_chain]
+            # write_index = (s_int * number_chain_steps_to_save) // self.T 
+            # chain_X[write_index] = discrete_sampled_s.X[:keep_chain]
+            # chain_E[write_index] = discrete_sampled_s.E[:keep_chain]
             # keep_chain = -1
             nll += node_log_likelihood
             ell += edge_log_likelihood
@@ -663,7 +663,8 @@ class MarkovBridge(pl.LightningModule):
         products_list = utils.create_input_product_molecules(data, batch_size)
 
         molecule_list = utils.create_pred_reactant_molecules(X, E, data.batch, batch_size)
-
+        # torch.save(molecule_list, f'sampled_s.pt')
+        # exit()
         return (
             chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, products_list, molecule_list, pred, score,
             nll.detach().cpu().numpy().tolist(),
@@ -686,17 +687,6 @@ class MarkovBridge(pl.LightningModule):
         current_samples_path = os.path.join(self.graphs_dir, f'epoch{self.current_epoch}_b{batch_id}')
         current_chains_dir = os.path.join(self.chains_dir, f'epoch_{self.current_epoch}')
         if sample_idx == 0:
-            num_molecules = chain_X.shape[1]
-            for i in range(num_molecules):
-                if r_chain_X != None:
-                    reverse_path = os.path.join(current_chains_dir, f'reverse_molecule_{batch_id + i}')
-                    os.makedirs(reverse_path, exist_ok=True)
-                    self.visualization_tools.visualize_chain(
-                        path=reverse_path,
-                        nodes_list=r_chain_X[:, i, :].numpy(),
-                        adjacency_matrix=r_chain_E[:, i, :].numpy(),
-                    )
-            return 
 
             # 2. Visualize true reactants
             self.visualization_tools.visualize(
@@ -704,14 +694,6 @@ class MarkovBridge(pl.LightningModule):
                 molecules=true_molecule_list,
                 num_molecules_to_visualize=save_final,
                 prefix='true_',
-            )
-
-            # 3. Visualize input products
-            self.visualization_tools.visualize(
-                path=current_samples_path,
-                molecules=products_list,
-                num_molecules_to_visualize=save_final,
-                prefix='input_product_',
             )
 
         # Visualize predicted reactants
@@ -729,7 +711,7 @@ class MarkovBridge(pl.LightningModule):
         t = 1 - t
         beta_t = self.noise_schedule(t_normalized=t)  # (bs, 1)
         # Neural net predictions
-        noisy_data = {'X_t': X_T, 'E_t': E_t, 'y_t': y_t, 't': t, 'node_mask': node_mask}
+        noisy_data = {'X_t': X_t, 'E_t': E_t, 'y_t': y_t, 't': t, 'node_mask': node_mask}
         extra_data = self.compute_extra_data(noisy_data, context=context)
          
         logits_cond = self.forward(noisy_data, ms, extra_data, node_mask, s_mask)

@@ -77,7 +77,7 @@ class CanopusDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['canopus_tr.pt', 'canopus_val.pt', 'canopus_test.pt'] #, 'canopus_all_test_scaf.pt']
+        return ['canopus_tr_r.pt', 'canopus_val_r.pt', 'canopus_test_r.pt'] #, 'canopus_all_test_scaf.pt']
 
     def download(self):
         """
@@ -107,7 +107,7 @@ class CanopusDataset(InMemoryDataset):
         data_list = []
         smiles_kept = []
         for i, smiles in enumerate(tqdm(smiles_list)):
-            data = create_scaffold_graph(smiles, atom_decoder, i, ms_list[i], sca_dict, key_list[i])
+            data = create_scaffold_graph(smiles, atom_decoder, i, ms_list[i], sca_dict, key_list[i], source=self.stage)
             if data == None:
                 continue
 
@@ -256,23 +256,28 @@ class Canopusinfos(AbstractDatasetInfos):
         # after we can be sure we have the data, complete infos
         self.complete_infos(n_nodes=self.n_nodes, node_types=self.node_types)
 
-def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[], use_scaffold=True):
+def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[], use_scaffold=True, source='train'):
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.RemoveAllHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
     pyg_graph = molecule_to_pyg_graph(mol, atom_decoder, smiles, ms, key=key_list)
     if sca_dict != None:
-        p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
-        pyg_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms, key_list[i])
+        if sca_dict != None:
+            p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
+        else:
+            p_mol = mol
+        # pyg_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms, key_list[i])
         scaffold = GetScaffoldForMol(p_mol)
-        if scaffold == None:
+        scaffold = add_missing_atoms(scaffold, atoms)
+        scaffold_g = molecule_to_pyg_graph(scaffold, atom_decoder, smiles, ms, key=key_list)
+        if scaffold_g == None:
             return None
-        scaffold_nodes = align_scaffold_to_molecule(p_mol, scaffold)
-        edge_start, edge_end = pyg_graph.edge_index
-        edge_mask = torch.tensor([start.item() in scaffold_nodes and end.item() in scaffold_nodes for start, end in zip(edge_start, edge_end)])
-
-        scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
-        scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
+        scaffold_g = sort_nodes_by_feature(scaffold_g)
+        pyg_graph = sort_nodes_by_feature(pyg_graph)
+        assert (scaffold_g.x == pyg_graph.x).all()
+        scaffold_edge_index = scaffold_g.edge_index
+        scaffold_edge_attr = scaffold_g.edge_attr
+        scaffold_x = scaffold_g.x
     else:
         scaffold = GetScaffoldForMol(mol)
         if scaffold == None:
@@ -285,21 +290,35 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
         # Apply mask to edge_index to keep only edges in the scaffold
         scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
         scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
-
-        # if use_scaffold:
-        #     scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
-        #     scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
-        # else:
-        #     scaffold_edge_index = torch.zeros_like(pyg_graph.edge_index[:, edge_mask])
-        #     scaffold_edge_attr = torch.zeros_like(pyg_graph.edge_attr[edge_mask])
-
+        scaffold_x = pyg_graph.x
+    
+    assert (pyg_graph.x == scaffold_x).all()
     y = torch.zeros(size=(1, 0), dtype=torch.float)
     data = Data(
         x=pyg_graph.x, edge_index=pyg_graph.edge_index, edge_attr=pyg_graph.edge_attr, y=pyg_graph.y, s=pyg_graph.s, idx=i,
-        p_x=pyg_graph.x, p_edge_index=scaffold_edge_index, p_edge_attr=scaffold_edge_attr,
+        p_x=scaffold_x, p_edge_index=scaffold_edge_index, p_edge_attr=scaffold_edge_attr,
         r_smiles=Chem.MolToSmiles(mol), p_smiles=Chem.MolToSmiles(scaffold), s_mask=pyg_graph.s_mask,
     )
     return data
+
+
+def sort_nodes_by_feature(graph):
+    """Sorts PyG graph nodes by their one-hot encoding index."""
+    class_indices = torch.argmax(graph.x, dim=1)  # Convert one-hot to class index
+    perm = torch.argsort(class_indices)  # Get sorted order
+    
+    # Reorder node features
+    graph.x = graph.x[perm]
+    
+    # Reorder edge indices
+    edge_map = {old_idx: new_idx for new_idx, old_idx in enumerate(perm.tolist())}
+    graph.edge_index = torch.tensor([
+        [edge_map[i] for i in graph.edge_index[0].tolist()],
+        [edge_map[i] for i in graph.edge_index[1].tolist()]
+    ])
+
+    return graph
+
 
 bonds = {BT.SINGLE: 0, BT.DOUBLE: 1, BT.TRIPLE: 2, BT.AROMATIC: 3}
 
@@ -439,7 +458,14 @@ def get_fully_connect(edge_index, edge_attr):
     
     return fully_connected_edge_index, new_edge_attr
 
+def sort_edges(edge_index, edge_attr, max_num_nodes):
+        if len(edge_attr) != 0:
+            perm = (edge_index[0] * max_num_nodes + edge_index[1]).argsort()
+            edge_index = edge_index[:, perm]
+            edge_attr = edge_attr[perm]
 
+        return edge_index, edge_attr
+        
 def remove_wildcard_hydrogens(mol):
     """
     Removes atoms like [*H] or [*] from the RDKit molecule.

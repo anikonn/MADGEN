@@ -10,7 +10,7 @@ from tqdm import tqdm
 import math
 get_norm = True
 
-data = pd.read_csv('./MassSpecGym.tsv', sep='\t')
+data = pd.read_csv('./MassSpecGym (2).tsv', sep='\t')
 
 stages = data['fold']
 smiles_list = data['smiles']   
@@ -41,11 +41,16 @@ if get_norm:
     print(spectra[:, 0].std()) # 0.22392237788824612
     print(spectra[:, 1].mean()) # 227.68274551635218
     print(spectra[:, 1].std()) # 170.81643093234982
+    mean_mz = spectra[:, 1].mean()
+    std_mz = spectra[:, 1].std()
+    mean_inten = spectra[:, 0].mean()
+    std_inten = spectra[:, 0].std()
     for i in range(len(ms_list)):
         # ms_list[i][:, 0] = (ms_list[i][:, 0]-0.10126370929621457)/0.22392237788824612
-        ms_list[i][:, 1] = (ms_list[i][:, 1]-205.2355227052664)/151.60058557325047
+        ms_list[i][:, 1] = (ms_list[i][:, 1]-mean_mz)/std_mz
+        # ms_list[i][:, 0] = (ms_list[i][:, 0]-mean_inten)/std_inten
 data = {
-'smiles': smiles_list,
+'smiles': smiles_list,  
 'ms': ms_list,
 'source': stages,
 'energy': energy,
@@ -66,8 +71,7 @@ df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 atom_symbols = []
 
 for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-    if type(row['energy']) == float and math.isnan(row['energy']):
-        continue
+
     molecule = Chem.MolFromSmiles(row['smiles'])
     smile = Chem.MolToSmiles(molecule)
     ms.append(row['ms'])

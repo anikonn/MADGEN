@@ -75,7 +75,7 @@ class MsGymDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['msgym_tr.pt', 'msgym_val.pt', 'msgym_test.pt']
+        return ['msgym_tr_final.pt', 'msgym_val_final.pt', 'msgym_test_final.pt']
 
     def download(self):
         pass
@@ -84,9 +84,9 @@ class MsGymDataset(InMemoryDataset):
         preprocess = self.preprocess
         RDLogger.DisableLog('rdApp.*')
         ms_dict = pickle.load(open('./data/msgym/raw/msgym.pkl', 'rb'))
-        if self.stage is None:
-            sca_list = pickle.load(open('./data/msgym/raw/ranks_total_1722912941993.pkl', 'rb'))
-            sca_dict = {ele[1]: Chem.MolToSmiles(Chem.MolFromSmarts(ele[4][0])) for ele in sca_list}
+        if self.stage =='':
+            sca_dict = pickle.load(open('./data/msgym/raw/ranks_msgym_pred.pkl', 'rb'))
+            # sca_dict = {ele[1]: Chem.MolToSmiles(Chem.MolFromSmarts(ele[4][0])) for ele in sca_list}
         else:
             sca_dict = None
         data = pd.DataFrame(ms_dict)
@@ -100,7 +100,7 @@ class MsGymDataset(InMemoryDataset):
         smiles_kept = []
         
         for i, smiles in enumerate(tqdm(smiles_list)):
-            data = create_scaffold_graph(smiles, atom_decoder, i, ms_list[i], sca_dict, key_list)
+            data = create_scaffold_graph(smiles, atom_decoder, i, ms_list[i], sca_dict, key_list, source=self.stage)
             if data is None:
                 continue
             
@@ -132,6 +132,7 @@ class MsGymDataset(InMemoryDataset):
                         print("Valence error in GetmolFrags")
                     except Chem.rdchem.KekulizeException:
                         print("Can't kekulize molecule")
+        
         if preprocess:
             smiles_save_path = osp.join(pathlib.Path(self.raw_paths[0]).parent, 'new_' + self.stage + '.smiles')
             with open(smiles_save_path, 'w') as f:
@@ -174,7 +175,7 @@ class MsGymDataModule(MolecularDataModule):
                 num_workers=self.num_workers,
                 shuffle=(self.shuffle and split == 'train'),
             )
-
+        print(len(datasets['test']))
         self.train_smiles = datasets['train'].r_smiles
 
 class MsGyminfos(AbstractDatasetInfos):
@@ -244,62 +245,142 @@ class MsGyminfos(AbstractDatasetInfos):
             self.valency_distribution = valencies
         self.complete_infos(n_nodes=self.n_nodes, node_types=self.node_types)
 
-def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[], use_scaffold=True):
+def align_molecular_node_features(pyg1, pyg2, atom_decoder):
+    """
+    Make pyg2 have the same node features as pyg1 and adjust its edge_index accordingly
+    Handles repeated atoms correctly
+    Args:
+        pyg1: First molecular PyG graph (reference)
+        pyg2: Second molecular PyG graph (to be aligned)
+        atom_decoder: List mapping indices to atom symbols, e.g. ['C', 'N', 'O', ...]
+    Returns:
+        Modified pyg2 with pyg1's node features and reorder_idx for edge updates
+    """
+    # Get atom types for both graphs
+    atoms1 = [atom_decoder[idx] for idx in pyg1.x.argmax(dim=1)]
+    atoms2 = [atom_decoder[idx] for idx in pyg2.x.argmax(dim=1)]
+    
+    # Verify same atom set
+    assert sorted(atoms1) == sorted(atoms2), "Molecules must have same atom set"
+    
+    # Handle repeated atoms by tracking counts
+    atom_counts = {}
+    reorder_idx = []
+    
+    # Create mapping considering repeated atoms
+    for i, atom2 in enumerate(atoms2):
+        # Count occurrences in atoms1 up to this point
+        target_idx = [j for j, atom1 in enumerate(atoms1) if atom1 == atom2][atom_counts.get(atom2, 0)]
+
+        reorder_idx.append(target_idx)
+        # Update count for this atom
+        atom_counts[atom2] = atom_counts.get(atom2, 0) + 1
+    # {i:pi(i)}
+
+    # Simply copy pyg1's node features
+    pyg2.x = pyg1.x.clone()
+    
+    # Update edge_index to match the new node ordering
+    edge_index = pyg2.edge_index.clone()
+    for i in range(edge_index.size(1)):
+        edge_index[0, i] = reorder_idx[edge_index[0, i]]
+        edge_index[1, i] = reorder_idx[edge_index[1, i]]
+    pyg2.edge_index = edge_index
+    
+    return pyg2, reorder_idx
+
+def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[], use_scaffold=True, source='train'):
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.RemoveAllHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
     pyg_graph = molecule_to_pyg_graph(mol, atom_decoder, smiles, ms)
-    
-    if sca_dict is not None:
-        p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
-        p_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms)
+    if sca_dict != None:
+        if sca_dict != None:
+            try:    
+                p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
+            except:
+                return None
+        else:
+            p_mol = mol
+        # pyg_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms, key_list[i])
         scaffold = GetScaffoldForMol(p_mol)
-        if scaffold is None:
+        scaffold = add_missing_atoms(scaffold, atoms)
+        scaffold_g = molecule_to_pyg_graph(scaffold, atom_decoder, smiles, ms)
+        if scaffold_g == None:
             return None
-        scaffold_nodes = align_scaffold_to_molecule(p_mol, scaffold)
-        edge_start, edge_end = p_graph.edge_index
-        edge_mask = torch.tensor([start.item() in scaffold_nodes and end.item() in scaffold_nodes for start, end in zip(edge_start, edge_end)])
-
-        scaffold_edge_index = p_graph.edge_index[:, edge_mask]
-        scaffold_edge_attr = p_graph.edge_attr[edge_mask]
+        scaffold_g = sort_nodes_by_feature(scaffold_g)
+        pyg_graph = sort_nodes_by_feature(pyg_graph)
+        assert (scaffold_g.x == pyg_graph.x).all()
+        scaffold_edge_index = scaffold_g.edge_index
+        scaffold_edge_attr = scaffold_g.edge_attr
+        scaffold_x = scaffold_g.x
     else:
         scaffold = GetScaffoldForMol(mol)
-        if scaffold is None:
+        if scaffold == None:
             return None
         scaffold_nodes = align_scaffold_to_molecule(mol, scaffold)
+        # Create a mask for edges that only connect nodes within the scaffold
         edge_start, edge_end = pyg_graph.edge_index
         edge_mask = torch.tensor([start.item() in scaffold_nodes and end.item() in scaffold_nodes for start, end in zip(edge_start, edge_end)])
 
+        # Apply mask to edge_index to keep only edges in the scaffold
         scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
         scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
-
+        scaffold_x = pyg_graph.x
+    
+    assert (pyg_graph.x == scaffold_x).all()
     y = torch.zeros(size=(1, 0), dtype=torch.float)
     data = Data(
         x=pyg_graph.x, edge_index=pyg_graph.edge_index, edge_attr=pyg_graph.edge_attr, y=pyg_graph.y, s=pyg_graph.s, idx=i,
-        p_x=pyg_graph.x, p_edge_index=scaffold_edge_index, p_edge_attr=scaffold_edge_attr,
+        p_x=scaffold_x, p_edge_index=scaffold_edge_index, p_edge_attr=scaffold_edge_attr,
         r_smiles=Chem.MolToSmiles(mol), p_smiles=Chem.MolToSmiles(scaffold), s_mask=pyg_graph.s_mask,
     )
     return data
 
+def sort_edges(edge_index, edge_attr, max_num_nodes):
+        if len(edge_attr) != 0:
+            perm = (edge_index[0] * max_num_nodes + edge_index[1]).argsort()
+            edge_index = edge_index[:, perm]
+            edge_attr = edge_attr[perm]
+
+        return edge_index, edge_attr
+
+def sort_nodes_by_feature(graph):
+    """Sorts PyG graph nodes by their one-hot encoding index."""
+    class_indices = torch.argmax(graph.x, dim=1)  # Convert one-hot to class index
+    perm = torch.argsort(class_indices)  # Get sorted order
+    
+    # Reorder node features
+    graph.x = graph.x[perm]
+    
+    # Reorder edge indices
+    edge_map = {old_idx: new_idx for new_idx, old_idx in enumerate(perm.tolist())}
+    graph.edge_index = torch.tensor([
+        [edge_map[i] for i in graph.edge_index[0].tolist()],
+        [edge_map[i] for i in graph.edge_index[1].tolist()]
+    ])
+
+    return graph
+
 bonds = {BT.SINGLE: 0, BT.DOUBLE: 1, BT.TRIPLE: 2, BT.AROMATIC: 3}
 
-def molecule_to_pyg_graph(mol, atom_decoder, smiles, ms_dict={}):    
+def molecule_to_pyg_graph(mol, atom_decoder, smiles, ms=[], energy=0, formula='', key=None, molatom=None):    
     atom_encoder = {atom: i for i, atom in enumerate(atom_decoder)}
     Chem.Kekulize(mol, clearAromaticFlags=True)
-    N = mol.GetNumAtoms()
-    if len(ms_dict) != 0:
-        ms = ms_dict
-        arr = ms[:50]
-        rows_to_add = 50 - arr.shape[0]
-        padding = ((0, rows_to_add), (0, 0))
-        ms = np.pad(arr, pad_width=padding, mode='constant', constant_values=-1000)
-        ms_mask = ms != -1000
-    else: 
-        ms_mask = None
+    N = mol.GetNumAtoms()    # try:
+    arr = ms[:50]
+    rows_to_add = 50 - arr.shape[0]
+    padding = ((0, rows_to_add), (0, 0))
+    ms = np.pad(arr, pad_width=padding, mode='constant', constant_values=-1000)
+    # except:
+    #     return None
+    ms_mask = ms!= -1000
     
     type_idx = []
-
-    atoms = mol.GetAtoms()
+    if molatom != None:
+        atoms = molatom.GetAtoms()
+    else:
+        atoms = mol.GetAtoms()
         
     explicit_valence = torch.zeros(N, dtype=torch.long)
     for aid, atom in enumerate(atoms):
@@ -309,17 +390,39 @@ def molecule_to_pyg_graph(mol, atom_decoder, smiles, ms_dict={}):
         explicit_valence[aid] = atom.GetExplicitValence()
         
     row, col, edge_type = [], [], []
-    atom_map = {atom.GetIdx(): atom.GetIdx() for i, atom in enumerate(mol.GetAtoms())}
+    if molatom != None:
+        molatom_symbols = [atom.GetSymbol() for atom in molatom.GetAtoms()]
+        mol_symbols = [atom.GetSymbol() for atom in mol.GetAtoms()]
+        # Step 2: Create a mapping from mol's atom indices to molatom's atom indices based on the atom symbols
+        atom_map = {}
+        for i, symbol in enumerate(mol_symbols):
+            # Find the index of the same atom in molatom
+            try:
+                if symbol not in molatom_symbols or symbol == '*':
+                    continue
+                j = molatom_symbols.index(symbol)
+                molatom_symbols[j] = '_'
+                atom_map[i] = j
+            except ValueError:
+                print(Chem.MolToSmiles(mol), Chem.MolToSmiles(molatom))
+                raise Exception(f"Atom {symbol} in mol not found in molatom")
+    else:
+        atom_map = {atom.GetIdx(): atom.GetIdx() for i, atom in enumerate(mol.GetAtoms())}
         
+    # Loop through each bond in mol
     for bond in mol.GetBonds():
+        # Reorder the bond indices according to the atom_map from molatom
         start = atom_map[bond.GetBeginAtomIdx()]
         end = atom_map[bond.GetEndAtomIdx()]
         
+        # Add both directions of the bond (undirected graph)
         row += [start, end]
         col += [end, start]
         
+        # Bond types: encoded as edge attributes
         edge_type += 2 * [bonds[bond.GetBondType()] + 1]
-        
+
+
     edge_index = torch.tensor([row, col], dtype=torch.long)
     edge_type = torch.tensor(edge_type, dtype=torch.long)
     edge_attr = F.one_hot(edge_type, num_classes=len(bonds) + 1).to(torch.float)
@@ -333,7 +436,7 @@ def molecule_to_pyg_graph(mol, atom_decoder, smiles, ms_dict={}):
 
     s = torch.tensor(ms, dtype=torch.float)
     s = s.reshape(-1, 100)
-    return Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y, s=s, explicit_valence=explicit_valence, s_mask=ms_mask)
+    return Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y, s=s, explicit_valence=explicit_valence, s_mask = ms_mask)
 
 def align_scaffold_to_molecule(mol, scaffold):
     mcs = rdFMCS.FindMCS([mol, scaffold])
@@ -343,23 +446,17 @@ def align_scaffold_to_molecule(mol, scaffold):
 
 def add_missing_atoms(scaffold, atoms_list):
     mol_atoms = [atom.GetSymbol() for atom in scaffold.GetAtoms()]
-    
     scaffold_counter = Counter(mol_atoms)
     mol_counter = Counter(atoms_list)
-    
     extra_atoms = []
     for atom, count in mol_counter.items():
         if count > scaffold_counter[atom]:
             extra_atoms.extend([atom] * (count - scaffold_counter[atom]))
-
     editable_scaffold = Chem.EditableMol(scaffold)
-    
     for atom_symbol in extra_atoms:
         new_atom = Chem.Atom(atom_symbol)
         editable_scaffold.AddAtom(new_atom)
-
     new_scaffold = editable_scaffold.GetMol()
-    
     return new_scaffold
 
 def get_fully_connect(edge_index, edge_attr):

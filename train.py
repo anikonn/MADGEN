@@ -142,6 +142,7 @@ def main(args):
             monitor=f"top_1_accuracy",
             mode="max",
             every_n_epochs=args.sample_every_val,
+            save_on_train_epoch_end=False,
         ),
         callbacks.ModelCheckpoint(
             dirpath=top_5_checkpoints_dir,
@@ -150,6 +151,7 @@ def main(args):
             monitor=f"top_5_accuracy",
             mode="max",
             every_n_epochs=args.sample_every_val,
+            save_on_train_epoch_end=False,
         ),
     ]
 
@@ -158,7 +160,7 @@ def main(args):
         if args.disable_wandb
         else loggers.WandbLogger(
             save_dir=args.logs,
-            project="RetroBridge",
+            project="Madgen",
             group=args.dataset,
             name=experiment,
             id=experiment,
@@ -171,10 +173,11 @@ def main(args):
         logger=wandb_logger,
         callbacks=checkpoint_callbacks,
         accelerator=args.device,
-        devices=1,
+        devices=[0,1],
         num_sanity_val_steps=0,
         enable_progress_bar=args.enable_progress_bar,
         log_every_n_steps=args.log_every_steps,
+        strategy='ddp_find_unused_parameters_true',
     )
 
     if args.resume is None:

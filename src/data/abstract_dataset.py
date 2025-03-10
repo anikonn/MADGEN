@@ -150,7 +150,6 @@ class AbstractDatasetInfos:
             'y': example_batch['y'].size(1) + 1,  # + 1 due to time conditioning
             's': example_batch['s'].size(1)
         }
-
         ex_extra_feat = extra_features(p_example_data)
         self.input_dims['X'] += ex_extra_feat.X.size(-1)
         self.input_dims['E'] += ex_extra_feat.E.size(-1)

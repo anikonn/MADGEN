@@ -1,5 +1,5 @@
 # General
-experiment_name: madgen_msgym
+experiment_name: madgen_msgym_final_100steps
 checkpoints: checkpoints
 logs: logs
 data: data
@@ -26,7 +26,7 @@ extra_nodes: True
 swap: False
 
 # Diffusion
-diffusion_steps: 50
+diffusion_steps: 100
 diffusion_noise_schedule: cosine
 transition: null
 fix_product_nodes: True
@@ -40,12 +40,12 @@ hidden_mlp_dims: {'X': 256, 'E': 128, 'y': 128, 's': 256}
 hidden_dims: {'dx': 64, 'de': 64, 'dy': 64, 'ds': 64, 'n_head': 8, 'dim_ffX': 256, 'dim_ffE': 128, 'dim_ffy': 128}
 
 # Training
-n_epochs: 2000
+n_epochs: 5000
 lambda_train: [5, 0]
-lr: 0.00001
+lr: 0.0002
 weight_decay: 0.000000000001
 loss_type: vlb
 condition: True
 
 # Checkpoint
-resume: 
+resume: madgen_msgym_final_100steps_03_03_22_55_23

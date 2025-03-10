@@ -257,23 +257,23 @@ class CrossAttention(nn.Module):
         queries = self.query_proj(x)
         keys = self.key_proj(ctx)
         values = self.value_proj(ctx)
+        attn_weights = None
+        context = torch.nn.functional.scaled_dot_product_attention(
+            queries,
+            keys,
+            values,
+            dropout_p=self.drop_p if self.training else 0,
+            is_causal=False,
+        )
+        # attn_weights = torch.matmul(queries, keys.transpose(-2, -1)) / (self.head_dim ** 0.5)
 
-        # context = torch.nn.functional.scaled_dot_product_attention(
-        #     queries,
-        #     keys,
-        #     values,
-        #     dropout_p=self.drop_p if self.training else 0,
-        #     is_causal=False,
-        # )
-        attn_weights = torch.matmul(queries, keys.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        # if mask is not None:
+        #     attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
 
-        if mask is not None:
-            attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
-
-        attn_weights = F.softmax(attn_weights, dim=-1)
-        if self.training:
-            attn_weights = self.dropout(attn_weights)
-        context = torch.matmul(attn_weights, values)
+        # attn_weights = F.softmax(attn_weights, dim=-1)
+        # if self.training:
+        #     attn_weights = self.dropout(attn_weights)
+        # context = torch.matmul(attn_weights, values)
         
         context = context.transpose(1, 2).reshape(batch_size, query_len, self.embed_dim)
         output = self.out_proj(context)
@@ -334,8 +334,6 @@ class SelfAttention(nn.Module):
         self.dropout = dropout
         self.bias = bias
 
-        self.q_layernorm = LayerNorm(n_embd // self.n_head)
-        self.k_layernorm = LayerNorm(n_embd // self.n_head)
 
     def forward(self, x, attn_mask=None):
         B, T, C = (
