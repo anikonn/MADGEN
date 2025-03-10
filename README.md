@@ -14,7 +14,7 @@ conda activate madgen
 pip install -r requirements.txt
 ```
 ## Data
-The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/14752671?preview=1).
+The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/14752671).
 
 ```shell
 wget https://zenodo.org/records/14752671/files/msgym.pkl?download=1 -O ./data/msgym/raw/msgym.pkl
@@ -87,10 +87,12 @@ If you have any questions, please contact yinkai.wang@tufts.edu and soha.hassoun
 If you find this code useful for your research, please consider citing our paper:
 
 ```
-@article{wang2025madgen,
-  title={MADGEN--Mass-Spec attends to De Novo Molecular generation},
-  author={Wang, Yinkai and Chen, Xiaohui and Liu, Liping and Hassoun, Soha},
-  journal={arXiv preprint arXiv:2501.01950},
-  year={2025}
+@inproceedings{
+       wang2025madgen,
+       title={{MADGEN}: Mass-Spec attends to De Novo Molecular generation},
+       author={Yinkai Wang and Xiaohui Chen and Liping Liu and Soha Hassoun},
+       booktitle={The Thirteenth International Conference on Learning Representations},
+       year={2025},
+       url={https://openreview.net/forum?id=78tc3EiUrN}
 }
 ```
