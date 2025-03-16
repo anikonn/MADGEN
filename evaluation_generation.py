@@ -72,7 +72,7 @@ if __name__ == "__main__":
     for dataset in datasets:
         path = args.file_path
         df1 = pd.read_csv(path)
-        result_metric = {"accuracy": 0, "similarity": 0, "MCES": 0}
+        
         # Top K
         ks = [1, 10]
         true_smile = list(df1["true"])
@@ -92,16 +92,21 @@ if __name__ == "__main__":
                 }
         )
         for k in ks:
+            result_metric = {"accuracy": 0, "similarity": 0, "MCES": 0}
             count = 0
-            sub_dfs = split_dataframe(df1, chunk_size=1)
-            for df in tqdm(sub_dfs[:1536]):
+            sub_dfs = split_dataframe(df1, chunk_size=50)
+            for df in tqdm(sub_dfs):
                 smile = list(df["true"])[0]
-                pred_smiles = list(df["pred"])[:k]
+                pred_smiles = sorted(list(df["pred"]), key=lambda x: list(df["pred"]).count(x), reverse=True)
+                pred_smiles = pred_smiles[:k]
                 scaf_smi = list(df["scaffold"])[0]
                 mol = Chem.MolFromSmiles(smile)
                 if mol is None:
                     # total_len -= 1
                     continue
+                if scaf_smi.count('.') == 0:
+                    # print('true', smile, 'pred_smiles', pred_smiles, 'scaf_smi', scaf_smi)
+                    count += 1
                 # if pred_smiles[0] is not None:
                 #     count += 1
                 pred_mols = [Chem.MolFromSmiles(pred) for pred in pred_smiles]
@@ -115,9 +120,9 @@ if __name__ == "__main__":
                     MolToInchiKey(pred).split("-")[0] if pred is not None else None
                     for pred in pred_mols
                 ]
-                if in_top_k:
-                    if Chem.MolToSmiles(mol) != Chem.MolToSmiles(GetScaffoldForMol(Chem.MolFromSmiles(scaf_smi))):
-                        print('scaffold match', smile)
+                # if in_top_k:
+                #     if Chem.MolToSmiles(mol) != Chem.MolToSmiles(GetScaffoldForMol(Chem.MolFromSmiles(scaf_smi))):
+                #         print('scaffold match', smile)
                 result_metric["accuracy"] += int(in_top_k)
                 # dists = []
                 # pairs = [(smile, pred) for pred, pred_mol in zip(pred_smiles, pred_mols) if pred_mol is not None]
@@ -143,8 +148,8 @@ if __name__ == "__main__":
                 # result_metric["MCES"] += min(min(dists), mces_thld)
             for key in result_metric:
                 result_metric[key] = result_metric[key] / len(sub_dfs)
-            print(count/256)
             print(dataset, k, result_metric)
+            print(count/len(sub_dfs))
         print(result_metric)
 
 

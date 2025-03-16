@@ -509,7 +509,7 @@ class GraphTransformer(nn.Module):
         ms = s.reshape(bs, -1, 2)
         
         ms = self.spectrum_embedding(ms)  # [b, m, 64]
-        orig_s_mask = s_mask[..., 0].cuda()
+        orig_s_mask = s_mask[..., 0].to(X.device)
         s_mask_int = orig_s_mask.int()
 
         s_mask = (

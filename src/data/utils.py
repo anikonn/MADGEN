@@ -102,21 +102,21 @@ def encode_no_edge(E):
     return E
 
 
-def create_true_reactant_molecules(data, batch_size):
-    reactants, r_node_mask = to_dense(data.x, data.edge_index, data.edge_attr, data.batch)
-    reactants = reactants.mask(r_node_mask, collapse=True)
+def create_true_target_molecules(data, batch_size):
+    targets, r_node_mask = to_dense(data.x, data.edge_index, data.edge_attr, data.batch)
+    targets = targets.mask(r_node_mask, collapse=True)
     n_nodes = scatter(torch.ones_like(data.batch), data.batch, reduce='sum')
     true_molecule_list = []
     for i in range(batch_size):
         n = n_nodes[i]
-        atom_types = reactants.X[i, :n].cpu()
-        edge_types = reactants.E[i, :n, :n].cpu()
+        atom_types = targets.X[i, :n].cpu()
+        edge_types = targets.E[i, :n, :n].cpu()
         true_molecule_list.append([atom_types, edge_types])
 
     return true_molecule_list
 
 
-def create_pred_reactant_molecules(X, E, batch_mask, batch_size):
+def create_pred_target_molecules(X, E, batch_mask, batch_size):
     molecule_list = []
     n_nodes = scatter(torch.ones_like(batch_mask), batch_mask, reduce='sum')
     for i in range(batch_size):
@@ -128,15 +128,15 @@ def create_pred_reactant_molecules(X, E, batch_mask, batch_size):
     return molecule_list
 
 
-def create_input_product_molecules(data, batch_size):
-    products, p_node_mask = to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
-    products = products.mask(p_node_mask, collapse=True)
+def create_input_scaffold_molecules(data, batch_size):
+    scaffolds, p_node_mask = to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
+    scaffolds = scaffolds.mask(p_node_mask, collapse=True)
     n_nodes = scatter(torch.ones_like(data.batch), data.batch, reduce='sum')
-    products_list = []
+    scaffolds_list = []
     for i in range(batch_size):
         n = n_nodes[i]
-        atom_types = products.X[i, :n].cpu()
-        edge_types = products.E[i, :n, :n].cpu()
-        products_list.append([atom_types, edge_types])
+        atom_types = scaffolds.X[i, :n].cpu()
+        edge_types = scaffolds.E[i, :n, :n].cpu()
+        scaffolds_list.append([atom_types, edge_types])
 
-    return products_list
+    return scaffolds_list

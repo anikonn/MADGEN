@@ -29,7 +29,7 @@ swap: False
 diffusion_steps: 100
 diffusion_noise_schedule: cosine
 transition: null
-fix_product_nodes: True
+fix_scaffold_nodes: True
 
 # Model
 use_context: True
@@ -42,7 +42,7 @@ hidden_dims: {'dx': 64, 'de': 64, 'dy': 64, 'ds': 64, 'n_head': 8, 'dim_ffX': 25
 # Training
 n_epochs: 5000
 lambda_train: [5, 0]
-lr: 0.0002
+lr: 0.00008
 weight_decay: 0.000000000001
 loss_type: vlb
 condition: True

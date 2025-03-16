@@ -125,7 +125,7 @@ def main(args):
             samples_per_input=args.samples_per_input,
             chains_to_save=args.chains_to_save,
             number_chain_steps_to_save=args.number_chain_steps_to_save,
-            fix_product_nodes=args.fix_product_nodes,
+            fix_scaffold_nodes=args.fix_scaffold_nodes,
             loss_type=args.loss_type,
             condition=args.condition,
         )
@@ -173,7 +173,7 @@ def main(args):
         logger=wandb_logger,
         callbacks=checkpoint_callbacks,
         accelerator=args.device,
-        devices=[0,1],
+        devices=[0],
         num_sanity_val_steps=0,
         enable_progress_bar=args.enable_progress_bar,
         log_every_n_steps=args.log_every_steps,

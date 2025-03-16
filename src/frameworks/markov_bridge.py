@@ -49,7 +49,7 @@ class MarkovBridge(pl.LightningModule):
             samples_per_input,
             chains_to_save,
             number_chain_steps_to_save,
-            fix_product_nodes=True,
+            fix_scaffold_nodes=True,
             loss_type='cross_entropy',
             condition=True,
     ):
@@ -130,7 +130,7 @@ class MarkovBridge(pl.LightningModule):
         self.chains_to_save = chains_to_save
         self.val_counter = 0
 
-        self.fix_product_nodes = fix_product_nodes
+        self.fix_scaffold_nodes = fix_scaffold_nodes
         self.loss_type = loss_type
 
     def configure_optimizers(self):
@@ -146,70 +146,70 @@ class MarkovBridge(pl.LightningModule):
         self.train_metrics.reset()
 
     def process_and_forward(self, data):
-        # Getting graphs of reactants (target) and product (context)
-        reactants, r_node_mask = utils.to_dense(data.x, data.edge_index, data.edge_attr, data.batch)
-        reactants = reactants.mask(r_node_mask)
+        # Getting graphs of targets (target) and scaffold (context)
+        targets, r_node_mask = utils.to_dense(data.x, data.edge_index, data.edge_attr, data.batch)
+        targets = targets.mask(r_node_mask)
 
-        product, p_node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
-        product = product.mask(p_node_mask)
+        scaffold, p_node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
+        scaffold = scaffold.mask(p_node_mask)
 
         assert torch.allclose(r_node_mask, p_node_mask)
         node_mask = r_node_mask
 
         # cfg training
         if self.training:
-            s_mask = (torch.rand(product.X.shape[0]) < 0.1).float()[:, None].cuda()
+            s_mask = (torch.rand(scaffold.X.shape[0]) < 0.1).float()[:, None].to(self.device)
             data.s = data.s * s_mask + data.s * (1-s_mask) # bs,n_embd
         
         # Getting noisy data
-        # Note that here products and reactants are swapped
+        # Note that here scaffolds and targets are swapped
         noisy_data = self.apply_noise(
-            X=product.X, E=product.E, y=product.y,
-            X_T=reactants.X, E_T=reactants.E, y_T=reactants.y,
+            X=scaffold.X, E=scaffold.E, y=scaffold.y,
+            X_T=targets.X, E_T=targets.E, y_T=targets.y,
             node_mask=node_mask, s=data.s
         )
         # Computing extra features + context and making predictions
-        context = product.clone() if self.use_context else None
+        context = scaffold.clone() if self.use_context else None
         extra_data = self.compute_extra_data(noisy_data, context=context)
         pred = self.forward(noisy_data, data.s, extra_data, node_mask, data.s_mask)
         # Masking unchanged part
-        if self.fix_product_nodes:
-            fixed_edges = (product.E[...,1:].sum(-1) > 0).unsqueeze(-1)   
+        if self.fix_scaffold_nodes:
+            fixed_edges = (scaffold.E[...,1:].sum(-1) > 0).unsqueeze(-1)   
             modifiable_edges = (~fixed_edges)
             assert torch.all(fixed_edges | modifiable_edges)
-            pred.E = pred.E * modifiable_edges  + product.E * fixed_edges
+            pred.E = pred.E * modifiable_edges  + scaffold.E * fixed_edges
             edge_mask =(node_mask.unsqueeze(1) * node_mask.unsqueeze(2))
             pred.E = pred.E * edge_mask.unsqueeze(-1)
 
-        return reactants, product, pred, node_mask, noisy_data, context
+        return targets, scaffold, pred, node_mask, noisy_data, context
 
     def training_step(self, data, i):
-        reactants, product, pred, node_mask, noisy_data, _ = self.process_and_forward(data)
+        targets, scaffold, pred, node_mask, noisy_data, _ = self.process_and_forward(data)
         if self.loss_type == 'vlb':
             return self.compute_training_VLB(
-                reactants=reactants,
+                targets=targets,
                 pred=pred,
                 node_mask=node_mask,
                 noisy_data=noisy_data,
                 i=i,
             )
         else:
-            return self.compute_training_CE_loss_and_metrics(reactants=reactants, pred=pred, i=i)
+            return self.compute_training_CE_loss_and_metrics(targets=targets, pred=pred, i=i)
 
-    def compute_training_CE_loss_and_metrics(self, reactants, pred, i):
+    def compute_training_CE_loss_and_metrics(self, targets, pred, i):
         loss = self.train_loss(
             masked_pred_X=pred.X,
             masked_pred_E=pred.E,
             pred_y=pred.y,
-            true_X=reactants.X,
-            true_E=reactants.E,
-            true_y=reactants.y,
+            true_X=targets.X,
+            true_E=targets.E,
+            true_y=targets.y,
         )
         self.train_metrics(
             masked_pred_X=pred.X,
             masked_pred_E=pred.E,
-            true_X=reactants.X,
-            true_E=reactants.E,
+            true_X=targets.X,
+            true_E=targets.E,
         )
 
         if i % self.log_every_steps == 0:
@@ -224,14 +224,14 @@ class MarkovBridge(pl.LightningModule):
 
         return {'loss': loss}
 
-    def compute_validation_CE_loss(self, reactants, pred, i):
+    def compute_validation_CE_loss(self, targets, pred, i):
         loss = self.val_loss(
             masked_pred_X=pred.X,
             masked_pred_E=pred.E,
             pred_y=pred.y,
-            true_X=reactants.X,
-            true_E=reactants.E,
-            true_y=reactants.y,
+            true_X=targets.X,
+            true_E=targets.E,
+            true_y=targets.y,
         )
 
         if i % self.log_every_steps == 0:
@@ -244,9 +244,9 @@ class MarkovBridge(pl.LightningModule):
 
         return {'loss': loss}
 
-    def compute_training_VLB(self, reactants, pred, node_mask, noisy_data, i):
+    def compute_training_VLB(self, targets, pred, node_mask, noisy_data, i):
         z_t = utils.PlaceHolder(X=noisy_data['X_t'], E=noisy_data['E_t'], y=noisy_data['y_t'])
-        z_T_true = reactants
+        z_T_true = targets
         z_T_pred = pred
         t = noisy_data['t']
 
@@ -268,9 +268,9 @@ class MarkovBridge(pl.LightningModule):
 
         return {'loss': loss}
 
-    def compute_validation_VLB(self, reactants, pred, node_mask, noisy_data, i):
+    def compute_validation_VLB(self, targets, pred, node_mask, noisy_data, i):
         z_t = utils.PlaceHolder(X=noisy_data['X_t'], E=noisy_data['E_t'], y=noisy_data['y_t'])
-        z_T_true = reactants
+        z_T_true = targets
         z_T_pred = pred
         t = noisy_data['t']
 
@@ -297,17 +297,17 @@ class MarkovBridge(pl.LightningModule):
         self.sampling_metrics.reset()
 
     def validation_step(self, data, i):
-        reactants, product, pred, node_mask, noisy_data, context = self.process_and_forward(data)
+        targets, scaffold, pred, node_mask, noisy_data, context = self.process_and_forward(data)
         if self.loss_type == 'vlb':
             return self.compute_validation_VLB(
-                reactants=reactants,
+                targets=targets,
                 pred=pred,
                 node_mask=node_mask,
                 noisy_data=noisy_data,
                 i=i,
             )
         else:
-            return self.compute_validation_CE_loss(reactants=reactants, pred=pred, i=i)
+            return self.compute_validation_CE_loss(targets=targets, pred=pred, i=i)
 
     def on_validation_epoch_end(self):
         self.val_counter += 1
@@ -341,7 +341,7 @@ class MarkovBridge(pl.LightningModule):
             batch_groups = []
             batch_scores = []
             for sample_idx in range(self.samples_per_input):
-                molecule_list, true_molecule_list, products_list, scores, _, _ = self.sample_batch(
+                molecule_list, true_molecule_list, scaffolds_list, scores, _, _ = self.sample_batch(
                     data=data,
                     batch_id=ident,
                     batch_size=to_generate,
@@ -361,7 +361,7 @@ class MarkovBridge(pl.LightningModule):
             samples_left_to_generate -= to_generate
             chains_left_to_save -= chains_save
 
-            # Regrouping sampled reactants for computing top-N accuracy
+            # Regrouping sampled targets for computing top-N accuracy
             for mol_idx_in_batch in range(bs):
                 mol_samples_group = []
                 mol_scores_group = []
@@ -457,7 +457,7 @@ class MarkovBridge(pl.LightningModule):
             number_chain_steps_to_save,
             save_final,
             sample_idx,
-            save_true_reactants=True,
+            save_true_targets=True,
             use_one_hot=False,
     ):
         """
@@ -468,17 +468,17 @@ class MarkovBridge(pl.LightningModule):
         :param save_final: int: number of predictions to save to file
         :param keep_chain: int: number of chains to save to file
         :param sample_idx: int
-        :param save_true_reactants: bool
+        :param save_true_targets: bool
         :param use_one_hot: convert predictions to one hot before computing transition matrices
         :return: molecule_list. Each element of this list is a tuple (atom_types, charges, positions)
         """
 
-        chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, products_list, molecule_list, preds, score, nll, ell = self.sample_chain(
+        chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, scaffolds_list, molecule_list, preds, score, nll, ell = self.sample_chain(
             data=data,
             batch_size=batch_size,
             keep_chain=keep_chain,
             number_chain_steps_to_save=number_chain_steps_to_save,
-            save_true_reactants=save_true_reactants,
+            save_true_targets=save_true_targets,
             use_one_hot=use_one_hot,
         )
         if self.visualization_tools is not None:
@@ -486,7 +486,7 @@ class MarkovBridge(pl.LightningModule):
                 chain_X=chain_X,
                 chain_E=chain_E,
                 true_molecule_list=true_molecule_list,
-                products_list=products_list,
+                scaffolds_list=scaffolds_list,
                 molecule_list=molecule_list,
                 sample_idx=sample_idx,
                 batch_id=batch_id,
@@ -495,23 +495,23 @@ class MarkovBridge(pl.LightningModule):
                 r_chain_E = r_chain_E,
             )
 
-        return molecule_list, true_molecule_list, products_list, score.cpu().tolist(), nll, ell
+        return molecule_list, true_molecule_list, scaffolds_list, score.cpu().tolist(), nll, ell
 
     def sample_chain_no_true_no_save(self, data, batch_size, use_one_hot=False):
-        # Context product
-        product, node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
-        product = product.mask(node_mask)
+        # Context scaffold
+        scaffold, node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
+        scaffold = scaffold.mask(node_mask)
 
         # Creating context
-        context = product.clone() if self.use_context else None
+        context = scaffold.clone() if self.use_context else None
 
         # Masks for fixed and modifiable nodes
-        fixed_edges = (product.E[...,1:].sum(-1) > 0).unsqueeze(-1)
+        fixed_edges = (scaffold.E[...,1:].sum(-1) > 0).unsqueeze(-1)
         modifiable_edges = (~fixed_edges)
         assert torch.all(fixed_edges | modifiable_edges)
 
-        # z_T – starting state (product)
-        X, E, y = product.X, product.E, torch.empty((node_mask.shape[0], 0), device=self.device)
+        # z_T – starting state (scaffold)
+        X, E, y = scaffold.X, scaffold.E, torch.empty((node_mask.shape[0], 0), device=self.device)
 
         assert (E == torch.transpose(E, 1, 2)).all()
 
@@ -529,9 +529,9 @@ class MarkovBridge(pl.LightningModule):
                 X_t=X,
                 E_t=E,
                 y_t=y,
-                X_T=product.X,
-                E_T=product.E,
-                y_T=product.y,
+                X_T=scaffold.X,
+                E_T=scaffold.E,
+                y_T=scaffold.y,
                 node_mask=node_mask,
                 context=context,
                 use_one_hot=use_one_hot,
@@ -539,40 +539,40 @@ class MarkovBridge(pl.LightningModule):
                 s_mask=data.s_mask            )
 
             # Masking unchanged part
-            if self.fix_product_nodes:
-                sampled_s.E = sampled_s.E * modifiable_edges + product.E * fixed_edges
+            if self.fix_scaffold_nodes:
+                sampled_s.E = sampled_s.E * modifiable_edges + scaffold.E * fixed_edges
                 sampled_s = sampled_s.mask(node_mask)
 
             X, E, y = sampled_s.X, sampled_s.E, sampled_s.y
 
         sampled_s = sampled_s.mask(node_mask, collapse=True)
         X, E, y = sampled_s.X, sampled_s.E, sampled_s.y
-        molecule_list = utils.create_pred_reactant_molecules(X, E, data.batch, batch_size)
+        molecule_list = utils.create_pred_target_molecules(X, E, data.batch, batch_size)
 
         return molecule_list
 
     def sample_chain(
-            self, data, batch_size, keep_chain, number_chain_steps_to_save, save_true_reactants, use_one_hot=False
+            self, data, batch_size, keep_chain, number_chain_steps_to_save, save_true_targets, use_one_hot=False
     ):
-        # Context product
-        product, node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
-        product = product.mask(node_mask)
+        # Context scaffold
+        scaffold, node_mask = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
+        scaffold = scaffold.mask(node_mask)
 
-        # Discrete context product
-        product_discrete, _ = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
-        product_discrete = product_discrete.mask(node_mask, collapse=True)
+        # Discrete context scaffold
+        scaffold_discrete, _ = utils.to_dense(data.p_x, data.p_edge_index, data.p_edge_attr, data.batch)
+        scaffold_discrete = scaffold_discrete.mask(node_mask, collapse=True)
 
         # Creating context
-        context = product.clone() if self.use_context else None
+        context = scaffold.clone() if self.use_context else None
 
         # Masks for fixed and modifiable nodes
-        if self.fix_product_nodes:
-            fixed_edges = (product.E[...,1:].sum(-1) > 0).unsqueeze(-1)
+        if self.fix_scaffold_nodes:
+            fixed_edges = (scaffold.E[...,1:].sum(-1) > 0).unsqueeze(-1)
             modifiable_edges = (~fixed_edges)
             assert torch.all(fixed_edges | modifiable_edges)
 
-        # z_T – starting state (product)
-        X, E, y = product.X, product.E, torch.empty((node_mask.shape[0], 0), device=self.device)
+        # z_T – starting state (scaffold)
+        X, E, y = scaffold.X, scaffold.E, torch.empty((node_mask.shape[0], 0), device=self.device)
 
         assert (E == torch.transpose(E, 1, 2)).all()
         assert number_chain_steps_to_save < self.T
@@ -604,9 +604,9 @@ class MarkovBridge(pl.LightningModule):
                 X_t=X,
                 E_t=E,
                 y_t=y,
-                X_T=product.X,
-                E_T=product.E,
-                y_T=product.y,
+                X_T=scaffold.X,
+                E_T=scaffold.E,
+                y_T=scaffold.y,
                 node_mask=node_mask,
                 context=context,
                 use_one_hot=use_one_hot,
@@ -615,9 +615,9 @@ class MarkovBridge(pl.LightningModule):
             )
 
             # Masking unchanged part
-            if self.fix_product_nodes:
-                sampled_s.X = product.X
-                sampled_s.E = sampled_s.E * modifiable_edges  + product.E * fixed_edges
+            if self.fix_scaffold_nodes:
+                sampled_s.X = scaffold.X
+                sampled_s.E = sampled_s.E * modifiable_edges  + scaffold.E * fixed_edges
                 sampled_s = sampled_s.mask(node_mask)
                 discrete_sampled_s = sampled_s.clone()
                 discrete_sampled_s = discrete_sampled_s.mask(node_mask, collapse=True)
@@ -632,7 +632,7 @@ class MarkovBridge(pl.LightningModule):
             nll += node_log_likelihood
             ell += edge_log_likelihood
             
-        X, E, y = product.X, product.E, torch.empty((node_mask.shape[0], 0), device=self.device)
+        X, E, y = scaffold.X, scaffold.E, torch.empty((node_mask.shape[0], 0), device=self.device)
 
         # Save raw predictions for further scoring
         pred = sampled_s.clone()
@@ -657,16 +657,16 @@ class MarkovBridge(pl.LightningModule):
 
             assert chain_X.shape[0] == (number_chain_steps_to_save + 10)
 
-        # Saving true and predicted reactants
-        true_molecule_list = utils.create_true_reactant_molecules(data, batch_size) if save_true_reactants else []
+        # Saving true and predicted targets
+        true_molecule_list = utils.create_true_target_molecules(data, batch_size) if save_true_targets else []
 
-        products_list = utils.create_input_product_molecules(data, batch_size)
+        scaffolds_list = utils.create_input_scaffold_molecules(data, batch_size)
 
-        molecule_list = utils.create_pred_reactant_molecules(X, E, data.batch, batch_size)
+        molecule_list = utils.create_pred_target_molecules(X, E, data.batch, batch_size)
         # torch.save(molecule_list, f'sampled_s.pt')
         # exit()
         return (
-            chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, products_list, molecule_list, pred, score,
+            chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, scaffolds_list, molecule_list, pred, score,
             nll.detach().cpu().numpy().tolist(),
             ell.detach().cpu().numpy().tolist(),
         )
@@ -676,7 +676,7 @@ class MarkovBridge(pl.LightningModule):
             chain_X,
             chain_E,
             true_molecule_list,
-            products_list,
+            scaffolds_list,
             molecule_list,
             sample_idx,
             batch_id,
@@ -688,7 +688,7 @@ class MarkovBridge(pl.LightningModule):
         current_chains_dir = os.path.join(self.chains_dir, f'epoch_{self.current_epoch}')
         if sample_idx == 0:
 
-            # 2. Visualize true reactants
+            # 2. Visualize true targets
             self.visualization_tools.visualize(
                 path=current_samples_path,
                 molecules=true_molecule_list,
@@ -696,7 +696,7 @@ class MarkovBridge(pl.LightningModule):
                 prefix='true_',
             )
 
-        # Visualize predicted reactants
+        # Visualize predicted targets
         self.visualization_tools.visualize(
             path=current_samples_path,
             molecules=molecule_list,

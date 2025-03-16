@@ -77,7 +77,7 @@ class CanopusDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['canopus_tr_r.pt', 'canopus_val_r.pt', 'canopus_test_r.pt'] #, 'canopus_all_test_scaf.pt']
+        return ['canopus_tr_r.pt', 'canopus_val_r.pt', 'canopus_test_r_pred.pt'] #, 'canopus_all_test_scaf.pt']
 
     def download(self):
         """
@@ -85,17 +85,37 @@ class CanopusDataset(InMemoryDataset):
         """
         pass
     
+    def __getitem__(self, idx):
+        data = self.get(idx)
+        num_nodes = data.x.shape[0]
+
+        perm = torch.randperm(num_nodes)
+
+        # Create a mapping from old node indices to new node indices
+        mapping = torch.empty_like(perm)
+        mapping[perm] = torch.arange(num_nodes)
+        assert (data.x == data.p_x).all(), f'before:{idx}: {data.x}, {data.p_x}'
+        # Permute node features
+        data.x = data.x[perm]
+        data.p_x = data.p_x[perm]
+        # Update edge indices using the mapping
+        data.edge_index = mapping[data.edge_index]
+        data.p_edge_index= mapping[data.p_edge_index]
+        assert (data.x == data.p_x).all(), f'after: {idx}: {data.x}, {data.p_x}'
+        return data
+
 
     def process(self):
         preprocess = self.preprocess
         RDLogger.DisableLog('rdApp.*')
         ms_dict = pickle.load(open('./data/canopus/raw/canopus.pkl', 'rb'))
-        if self.stage == '': # For Predictive Approach
-            sca_list = pickle.load(open('./data/canopus/raw/ranks_total_1727337092398.pkl', 'rb'))
-            mol_dict = pickle.load(open('./data/canopus/raw/smiles_dict.pkl', 'rb'))
-            sca_dict = {}
-            for ele in sca_list:
-                sca_dict[ele[1]] =mol_dict.get(ele[4][0], None)
+        if self.stage == 'test': # For Predictive Approach
+            # sca_list = pickle.load(open('./data/canopus/raw/ranks_total_1727337092398.pkl', 'rb'))
+            # mol_dict = pickle.load(open('./data/canopus/raw/smiles_dict.pkl', 'rb'))
+            # sca_dict = {}
+            # for ele in sca_list:
+            #     sca_dict[ele[1]] =mol_dict.get(ele[4][0], None)
+            sca_dict = pickle.load(open('./data/canopus/raw/ranks_canopus_pred.pkl', 'rb'))
         else:
             sca_dict = None
         data = pd.DataFrame(ms_dict)
@@ -261,9 +281,12 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
     mol = Chem.RemoveAllHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
     pyg_graph = molecule_to_pyg_graph(mol, atom_decoder, smiles, ms, key=key_list)
-    if sca_dict != None:
+    if sca_dict != None or source == 'test':
         if sca_dict != None:
-            p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
+            try:
+                p_mol = Chem.MolFromSmiles(sca_dict[key_list])
+            except:
+                return None
         else:
             p_mol = mol
         # pyg_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms, key_list[i])
@@ -291,7 +314,26 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
         scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
         scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
         scaffold_x = pyg_graph.x
+        # if use_scaffold:
+        #     scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
+        #     scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
+        # else:
+        #     scaffold_edge_index = torch.zeros_like(pyg_graph.edge_index[:, edge_mask])
+        #     scaffold_edge_attr = torch.zeros_like(pyg_graph.edge_attr[edge_mask])
     
+    new2old_idx = torch.randperm(pyg_graph.x.shape[0]).long()
+    old2new_idx = torch.empty_like(new2old_idx)
+    old2new_idx[new2old_idx] = torch.arange(pyg_graph.x.shape[0])
+    if scaffold_edge_index.shape[1] == 0:
+        return None
+    pyg_graph.x = pyg_graph.x[new2old_idx]
+    pyg_graph.edge_index = torch.stack([old2new_idx[pyg_graph.edge_index[0]], old2new_idx[pyg_graph.edge_index[1]]], dim=0)
+    pyg_graph.edge_index, pyg_graph.edge_attr = sort_edges(pyg_graph.edge_index, pyg_graph.edge_attr, pyg_graph.x.shape[0])
+
+    scaffold_x = scaffold_x[new2old_idx]
+    scaffold_edge_index = torch.stack([old2new_idx[scaffold_edge_index[0]], old2new_idx[scaffold_edge_index[1]]], dim=0)
+    scaffold_edge_index, scaffold_edge_attr = sort_edges(scaffold_edge_index, scaffold_edge_attr, scaffold_x.shape[0])
+
     assert (pyg_graph.x == scaffold_x).all()
     y = torch.zeros(size=(1, 0), dtype=torch.float)
     data = Data(

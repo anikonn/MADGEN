@@ -95,8 +95,8 @@ def main(args):
     )
     for i, data in enumerate(tqdm(dataloader)):
         if i * args.batch_size < skip_first_n:
+            print(i , skip_first_n)
             continue
-
         bs = len(data.batch.unique())
         batch_groups = []
         batch_scores = []
@@ -234,3 +234,6 @@ if __name__ == "__main__":
         "--table_name", action="store", type=str, required=False, default=''
     )
     main(args=parse_yaml_config(parser.parse_args()))
+
+
+

@@ -19,7 +19,7 @@ enable_progress_bar: True
 
 # Data
 dataset: canopus
-batch_size: 128
+batch_size: 256
 num_workers: 47
 shuffle: True
 extra_nodes: True
@@ -48,5 +48,5 @@ loss_type: vlb
 condition: True
 
 # Checkpoint
-resume: madgen_canopus_100steps_03_03_15_45_16
+resume: 
 

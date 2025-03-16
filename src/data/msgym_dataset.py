@@ -80,11 +80,32 @@ class MsGymDataset(InMemoryDataset):
     def download(self):
         pass
 
+    def __getitem__(self, idx):
+        if self.stage == 'test':
+            return super().__getitem__(idx)
+        data = self.get(idx)
+        num_nodes = data.x.shape[0]
+
+        perm = torch.randperm(num_nodes)
+
+        # Create a mapping from old node indices to new node indices
+        mapping = torch.empty_like(perm)
+        mapping[perm] = torch.arange(num_nodes)
+        assert (data.x == data.p_x).all(), f'before:{idx}: {data.x}, {data.p_x}'
+        # Permute node features
+        data.x = data.x[perm]
+        data.p_x = data.p_x[perm]
+        # Update edge indices using the mapping
+        data.edge_index = mapping[data.edge_index]
+        data.p_edge_index= mapping[data.p_edge_index]
+        assert (data.x == data.p_x).all(), f'after: {idx}: {data.x}, {data.p_x}'
+        return data
+
     def process(self):
         preprocess = self.preprocess
         RDLogger.DisableLog('rdApp.*')
         ms_dict = pickle.load(open('./data/msgym/raw/msgym.pkl', 'rb'))
-        if self.stage =='':
+        if self.stage =='test':
             sca_dict = pickle.load(open('./data/msgym/raw/ranks_msgym_pred.pkl', 'rb'))
             # sca_dict = {ele[1]: Chem.MolToSmiles(Chem.MolFromSmarts(ele[4][0])) for ele in sca_list}
         else:
@@ -294,7 +315,7 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
     mol = Chem.RemoveAllHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
     pyg_graph = molecule_to_pyg_graph(mol, atom_decoder, smiles, ms)
-    if sca_dict != None:
+    if sca_dict != None or source == 'test':
         if sca_dict != None:
             try:    
                 p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
@@ -327,7 +348,26 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
         scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
         scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
         scaffold_x = pyg_graph.x
+        # if use_scaffold:
+        #     scaffold_edge_index = pyg_graph.edge_index[:, edge_mask]
+        #     scaffold_edge_attr = pyg_graph.edge_attr[edge_mask]
+        # else:
+        #     scaffold_edge_index = torch.zeros_like(pyg_graph.edge_index[:, edge_mask])
+        #     scaffold_edge_attr = torch.zeros_like(pyg_graph.edge_attr[edge_mask])
     
+    new2old_idx = torch.randperm(pyg_graph.x.shape[0]).long()
+    old2new_idx = torch.empty_like(new2old_idx)
+    old2new_idx[new2old_idx] = torch.arange(pyg_graph.x.shape[0])
+
+    pyg_graph.x = pyg_graph.x[new2old_idx]
+    pyg_graph.edge_index = torch.stack([old2new_idx[pyg_graph.edge_index[0]], old2new_idx[pyg_graph.edge_index[1]]], dim=0)
+    pyg_graph.edge_index, pyg_graph.edge_attr = sort_edges(pyg_graph.edge_index, pyg_graph.edge_attr, pyg_graph.x.shape[0])
+    if scaffold_edge_index.shape[1] == 0:
+        return None
+    scaffold_x = scaffold_x[new2old_idx]
+    scaffold_edge_index = torch.stack([old2new_idx[scaffold_edge_index[0]], old2new_idx[scaffold_edge_index[1]]], dim=0)
+    scaffold_edge_index, scaffold_edge_attr = sort_edges(scaffold_edge_index, scaffold_edge_attr, scaffold_x.shape[0])
+
     assert (pyg_graph.x == scaffold_x).all()
     y = torch.zeros(size=(1, 0), dtype=torch.float)
     data = Data(

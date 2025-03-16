@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.1.2+cu121
+
+torch-geometric==2.4.0
+-f https://data.pyg.org/whl/torch-2.1.2+cu121.html
+
+pytorch_lightning==2.2.0
+matplotlib==3.6.1
+pandas==2.2.2
+imageio==2.34.0
+wandb==0.16.3
+tqdm==4.66.5
+pulp==2.8
+myopic-mces==1.0

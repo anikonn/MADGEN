@@ -66,7 +66,9 @@ def process_chunk(args):
     chunk_results = {"accuracy": 0, "similarity": 0, "MCES": 0}
     
     smile = list(df["true"])[0]
-    pred_smiles = list(df["pred"])[:k]
+
+    pred_smiles = sorted(list(df["pred"]), key=lambda x: list(df["pred"]).count(x), reverse=True)
+    pred_smiles = pred_smiles[:k]
     mol = Chem.MolFromSmiles(smile)
     
     if mol is None:
@@ -136,7 +138,7 @@ if __name__ == "__main__":
         )
         
         for k in ks:
-            sub_dfs = split_dataframe(df1, chunk_size=10)
+            sub_dfs = split_dataframe(df1, chunk_size=50)
             
             # Prepare arguments for parallel processing
             process_args = [(df, k, myopic_mces, mces_thld) for df in sub_dfs]

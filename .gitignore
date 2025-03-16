@@ -10,6 +10,8 @@ data/*/*/*.csv
 dataset/*
 samples/*
 samples/*/*
-*.txt
 *.out
 *.zip
+*.err
+*.pt
+*.csv
