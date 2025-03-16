@@ -17,9 +17,9 @@ pip install -r requirements.txt
 The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/14752671).
 
 ```shell
-wget https://zenodo.org/records/14752671/files/msgym.pkl?download=1 -O ./data/msgym/raw/msgym.pkl
+wget https://zenodo.org/records/15036069/files/msgym.pkl?download=1 -O ./data/msgym/raw/msgym.pkl
 
-wget https://zenodo.org/records/14752671/files/canopus.pkl?download=1 -O ./data/canopus/raw/canopus.pkl
+wget https://zenodo.org/records/15036069/files/canopus.pkl?download=1 -O ./data/canopus/raw/canopus.pkl
 ```
 
 The NIST is a commercial dataset.
