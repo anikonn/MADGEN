@@ -14,7 +14,7 @@ conda activate madgen
 pip install -r requirements.txt
 ```
 ## Data
-The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/14752671).
+The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/15036069).
 
 ```shell
 wget https://zenodo.org/records/15036069/files/msgym.pkl?download=1 -O ./data/msgym/raw/msgym.pkl
