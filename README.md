@@ -50,9 +50,6 @@ conda activate madgen
 ```shell
 pip install -r requirements.txt
 ```
-## Data
-The processed data is available in the zenodo repository: [MADGEN](https://zenodo.org/records/15036069).
-
 3. **Verify installation:**
 ```shell
 python -c "import rdkit; print('RDKit version:', rdkit.__version__)"
