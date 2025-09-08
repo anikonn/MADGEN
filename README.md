@@ -204,6 +204,12 @@ wget https://zenodo.org/records/17074020/files/ranks_canopus_pred.pkl?download=1
 
 For custom retrieval experiments, please refer to [JESTR](https://github.com/HassounLab/JESTR1) for the retrieval framework.
 
+Then, 
+```shell
+cd data/msgym/raw/ # Or data/canopus/raw/
+python preprocess_rank.py
+```
+
 ## 🏆 Pre-trained Models
 
 Pre-trained model checkpoints are available at: [MADGEN Checkpoints](https://zenodo.org/records/17074020)
