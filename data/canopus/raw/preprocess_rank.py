@@ -2,6 +2,7 @@ import pickle
 from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 from tqdm import tqdm
+from collections import defaultdict
 
 def get_sca_smile(smiles):
     if type(smiles) == str:
@@ -10,52 +11,76 @@ def get_sca_smile(smiles):
         molecule = smiles
     scaffold = GetScaffoldForMol(molecule)
     return Chem.MolToSmiles(scaffold)
-# 1740431736104 4.13% (716/17320)
-# 1740431803101 12.42%
-# 1740508838828 canopus 5.31% (39/735)
+
+# Load data
+print("Loading data...")
 sca_list = pickle.load(open('./ranks_total_1741662754375.pkl', 'rb'))
-mol_dict = pickle.load(open('/data/yinkai/canopus/mol_dict.pkl', 'rb'))
-correct_count = 0
-total_count = 0
+mol_dict = pickle.load(open('./mol_dict.pkl', 'rb'))
+
+# Generate final results for k=110 (or whatever k you want to use)
+k = 110
 sca_dict = {}
-k = 20
+
+print(f"Generating final results for k={k}...")
 for ele in sca_list:
-    # query = mol_dict.get(ele[0])  # Query molecule
-    query = ele[0]  # Query molecule
-    # predictions = [mol_dict.get(i) for i in ele[4][:k]]  # First prediction
-    predictions = ele[4][:k]  # First prediction
+    query = mol_dict.get(ele[0])
+    
+    if query is None:
+        continue
+        
+    formula = Chem.rdMolDescriptors.CalcMolFormula(query)
+    predictions = [get_sca_smile(mol_dict.get(i)) for i in ele[4][:k] if mol_dict.get(i) is not None]
+    
     for prediction in predictions:
-        if query not in sca_dict.keys():
-            sca_dict[query] = {}
-        if prediction not in sca_dict[query].keys():
-            sca_dict[query][prediction] = 1
+        if formula not in sca_dict.keys():
+            sca_dict[formula] = {}
+        if prediction not in sca_dict[formula].keys():
+            sca_dict[formula][prediction] = 1
         else:
-            sca_dict[query][prediction] += 1
+            sca_dict[formula][prediction] += 1
 
-# for i in range(len(sca_list)):
-#     if get_sca_smile(sca_list[i][0]) in [get_sca_smile(p) for p in sca_list[i][4]]:
-#         print(i)
-#         break
-# for i in range(len(sca_list[9])):
-#     if get_sca_smile(sca_list[9][0]) == get_sca_smile(sca_list[9][4][i]):
-#         print(i)
-
-# count = 0
-# for i in sca_dict.keys():
-#     if get_sca_smile(i) in [get_sca_smile(k) for k in list(sca_dict[i].keys())[:1]]:
-#         count += 1
-# # print(count)
-
+# Sort predictions by frequency for each formula
 for i in sca_dict.keys():
     sca_dict[i] = {k: v for k, v in sorted(sca_dict[i].items(), key=lambda item: item[1], reverse=True)}
 
-# count = 0
-# for i in sca_list:
-#     if get_sca_smile(mol_dict.get(i[0])) == get_sca_smile(list(sca_dict[mol_dict.get(i[0])].keys())[0]):
-#         count +=1
+# Generate result dictionary
 result_dict = {}
-count = 0
 for i in sca_list:
-    result_dict[i[1]] = get_sca_smile(list(sca_dict[i[0]].keys())[0])
+    query = mol_dict.get(i[0])
+    if query is None:
+        continue
+        
+    formula = Chem.rdMolDescriptors.CalcMolFormula(query)
+    if formula in sca_dict and len(sca_dict[formula]) > 0:
+        result_dict[i[1]] = list(sca_dict[formula].keys())[0]
 
-pickle.dump(result_dict, open('./ranks_msgym_pred.pkl', 'wb'))
+# Calculate SPA (Scaffold Prediction Accuracy)
+print("Calculating SPA...")
+correct_count = 0
+total_count = 0
+
+for i in sca_list:
+    query = mol_dict.get(i[0])
+    if query is None:
+        continue
+        
+    formula = Chem.rdMolDescriptors.CalcMolFormula(query)
+    if formula in sca_dict and len(sca_dict[formula]) > 0:
+        # Get predicted scaffold (most frequent scaffold for this formula)
+        predicted_scaffold = list(sca_dict[formula].keys())[0]
+        
+        # Get true scaffold
+        true_scaffold = get_sca_smile(query)
+        
+        # Compare predicted vs true scaffold
+        if predicted_scaffold == true_scaffold:
+            correct_count += 1
+        total_count += 1
+
+# Calculate and display SPA
+spa = (correct_count / total_count) * 100 if total_count > 0 else 0
+print(f"Scaffold Prediction Accuracy (SPA): {spa:.2f}% ({correct_count}/{total_count})")
+
+print("Saving results...")
+pickle.dump(result_dict, open('./ranks_canopus_pred.pkl', 'wb'))
+print(f"Saved {len(result_dict)} results")
