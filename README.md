@@ -194,17 +194,67 @@ Download pre-computed retrieval results:
 
 ```shell
 # MSGym retrieval results
-wget https://zenodo.org/records/17074020/files/ranks_msgym_pred.pkl?download=1 -O ./data/msgym/raw/ranks_msgym_pred.pkl
+wget https://zenodo.org/records/17115068/files/ranks_msgym_pred.pkl?download=1 -O ./data/msgym/raw/ranks_msgym_pred.pkl
 
 # CANOPUS retrieval results
-wget https://zenodo.org/records/17074020/files/ranks_canopus_pred.pkl?download=1 -O ./data/canopus/raw/ranks_canopus_pred.pkl
+wget https://zenodo.org/records/17115068/files/ranks_canopus_pred.pkl?download=1 -O ./data/canopus/raw/ranks_canopus_pred.pkl
 ```
+
+## 📥 Data Download
+
+### Scaffold Retrieval Datasets
+
+Download the required datasets for scaffold retrieval experiments:
+
+```shell
+# Create data directories
+mkdir -p scaffold_retrieval/data/canopus
+mkdir -p scaffold_retrieval/data/massspecgym
+
+# Download CANOPUS dataset
+wget https://zenodo.org/records/17115068/files/canopus.zip?download=1 -O scaffold_retrieval/data/canopus.zip
+cd scaffold_retrieval/data/canopus
+unzip ../canopus.zip
+cd ../..
+
+# Download MassSpecGym dataset
+wget https://zenodo.org/records/17115068/files/massspecgym.zip?download=1 -O scaffold_retrieval/data/massspecgym.zip
+cd scaffold_retrieval/data/massspecgym
+unzip ../massspecgym.zip
+cd ../..
+```
+
+### Dataset Descriptions
+
+- **CANOPUS**: A comprehensive dataset for molecular structure prediction from mass spectrometry data
+- **MassSpecGym**: A benchmark dataset for mass spectrometry-based molecular identification
+
 
 ### Running Custom Retrieval
 
-For custom retrieval experiments, please refer to [JESTR](https://github.com/HassounLab/JESTR1) for the retrieval framework.
+The scaffold_retrieval module provides a comprehensive framework for molecular scaffold-based retrieval using mass spectrometry data. This module implements contrastive learning approaches to learn molecular representations and enables retrieval of molecules based on their structural scaffolds.
 
-Then, 
+
+#### Usage:
+
+1. **Training**: Use the training scripts for different datasets:
+   ```shell
+   cd scaffold_retrieval/
+   python train_msgym.py    # For MassSpecGym dataset
+   python train_canopus.py  # For Canopus dataset
+   ```
+
+
+3. **Candidate Ranking**: Generate ranked candidates:
+   ```shell
+   python cand_rank_msg.py   # For MassSpecGym
+   python cand_rank_canopus.py # For Canopus
+   ```
+
+#### Configuration:
+Modify `params_msg.yaml` or `params_canopus.yaml` to adjust model parameters, dataset settings, and training configurations.
+
+Then,
 ```shell
 cd data/msgym/raw/ # Or data/canopus/raw/
 python preprocess_rank.py
@@ -212,7 +262,7 @@ python preprocess_rank.py
 
 ## 🏆 Pre-trained Models
 
-Pre-trained model checkpoints are available at: [MADGEN Checkpoints](https://zenodo.org/records/17074020)
+Pre-trained model checkpoints are available at: [MADGEN Checkpoints](https://zenodo.org/records/17115068)
 
 ### Available Checkpoints
 
@@ -227,7 +277,7 @@ If you find this code useful for your research, please consider citing our paper
 ```bibtex
 @inproceedings{
     wang2025madgen,
-    title={{MADGEN}: Mass-Spec attends to De Novo Molecular generation},
+    title={MADGEN: Mass-Spec attends to De Novo Molecular generation},
     author={Yinkai Wang and Xiaohui Chen and Liping Liu and Soha Hassoun},
     booktitle={The Thirteenth International Conference on Learning Representations},
     year={2025},

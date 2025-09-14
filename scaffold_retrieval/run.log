@@ -1,0 +1,863 @@
+09-13 22:19:27	Values of Hyperparameters:
+09-13 22:19:27	exp : massspecgym
+09-13 22:19:27	fp_path : ecfp_3_4096
+09-13 22:19:27	use_sampling : False
+09-13 22:19:27	element_list : ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si', 'H']
+09-13 22:19:27	atom_feature : full
+09-13 22:19:27	bond_feature : full
+09-13 22:19:27	batch_size_train_contr : 128
+09-13 22:19:27	batch_size_train_contr_cand : 128
+09-13 22:19:27	batch_size_train_final : 128
+09-13 22:19:27	batch_size_val_final : 1280
+09-13 22:19:27	spec_type : ['[M+H]+', '[M+Na]+']
+09-13 22:19:27	load_dicts : False
+09-13 22:19:27	ignore_test_contr : True
+09-13 22:19:27	num_epoch_contr : 2000
+09-13 22:19:27	num_epoch_final : 100
+09-13 22:19:27	contr_temp : 0.05
+09-13 22:19:27	aug_cands : False
+09-13 22:19:27	aug_cands_wt : 0.1
+09-13 22:19:27	cand_aug_random : False
+09-13 22:19:27	gnn_channels : [64, 128, 256]
+09-13 22:19:27	attn_heads : [12, 12, 12]
+09-13 22:19:27	gnn_type : gcn
+09-13 22:19:27	num_gnn_layers : 3
+09-13 22:19:27	gnn_hidden_dim : 512
+09-13 22:19:27	gnn_out_feat : 196
+09-13 22:19:27	global_pooling : max
+09-13 22:19:27	gnn_dropout : 0.2
+09-13 22:19:27	contr_lr : 0.0005
+09-13 22:19:27	final_lr : 5e-06
+09-13 22:19:27	final_embedding_dim : 512
+09-13 22:19:27	fc_dropout : 0.4
+09-13 22:19:27	spec_embedding_dim : 1024
+09-13 22:19:27	debug : True
+09-13 22:19:27	logfile : run.log
+09-13 22:19:27	mz_log_low : -2
+09-13 22:19:27	mz_log_high : 3
+09-13 22:19:27	mz_spacing : log
+09-13 22:19:27	mz_precision : 32
+09-13 22:19:27	resolution : 1
+09-13 22:19:27	max_mz : 1000
+09-13 22:19:27	mz_transformation : log10over3
+09-13 22:19:27	sinus_embed_dim : 64
+09-13 22:19:27	aggregator : sum
+09-13 22:19:27	wt_contr : 0.5
+09-13 22:19:27	wt_fp : 0.5
+09-13 22:19:27	fp_len : 4096
+09-13 22:19:27	frz_contr : True
+09-13 22:19:27	contr_trg : True
+09-13 22:19:27	augment : False
+09-13 22:19:27	fp_loss : bce
+09-13 22:19:27	data_dir : data/
+09-13 22:19:27	early_stopping_patience : 50
+09-13 22:19:27	early_stopping_patience_contr : 100
+09-13 22:19:27	tfm_dim : 512
+09-13 22:19:27	tfm_dropout : 0.1
+09-13 22:19:27	tfm_nhead : 4
+09-13 22:19:27	num_tfm_layers : 3
+09-13 22:19:27	dim_feedforward : 256
+09-13 22:19:27	spec_enc : MLP_BIN
+09-13 22:19:27	inter : False
+09-13 22:19:27	pretrained_mol_enc_model : data/pretrained_mol_enc_model_1740368659380_best.pt
+09-13 22:19:27	pretrained_spec_enc_model : data/pretrained_spec_enc_model_1740368659380_best.pt
+09-13 22:19:30	Loading Contrastive Data...
+09-13 22:19:31	Done Loading Contrastive Data with 9 objects
+09-13 22:19:32	loading pretrained_mol_enc_model weights from data/pretrained_mol_enc_model_1740368659380_best.pt
+09-13 22:23:02	Values of Hyperparameters:
+09-13 22:23:02	exp : massspecgym
+09-13 22:23:02	fp_path : ecfp_3_4096
+09-13 22:23:02	use_sampling : False
+09-13 22:23:02	element_list : ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si', 'H']
+09-13 22:23:02	atom_feature : full
+09-13 22:23:02	bond_feature : full
+09-13 22:23:02	batch_size_train_contr : 128
+09-13 22:23:02	batch_size_train_contr_cand : 128
+09-13 22:23:02	batch_size_train_final : 128
+09-13 22:23:02	batch_size_val_final : 1280
+09-13 22:23:02	spec_type : ['[M+H]+', '[M+Na]+']
+09-13 22:23:02	load_dicts : False
+09-13 22:23:02	ignore_test_contr : True
+09-13 22:23:02	num_epoch_contr : 2000
+09-13 22:23:02	num_epoch_final : 100
+09-13 22:23:02	contr_temp : 0.05
+09-13 22:23:02	aug_cands : False
+09-13 22:23:02	aug_cands_wt : 0.1
+09-13 22:23:02	cand_aug_random : False
+09-13 22:23:02	gnn_channels : [64, 128, 256]
+09-13 22:23:02	attn_heads : [12, 12, 12]
+09-13 22:23:02	gnn_type : gcn
+09-13 22:23:02	num_gnn_layers : 3
+09-13 22:23:02	gnn_hidden_dim : 512
+09-13 22:23:02	gnn_out_feat : 196
+09-13 22:23:02	global_pooling : max
+09-13 22:23:02	gnn_dropout : 0.2
+09-13 22:23:02	contr_lr : 0.0005
+09-13 22:23:02	final_lr : 5e-06
+09-13 22:23:02	final_embedding_dim : 512
+09-13 22:23:02	fc_dropout : 0.4
+09-13 22:23:02	spec_embedding_dim : 1024
+09-13 22:23:02	debug : True
+09-13 22:23:02	logfile : run.log
+09-13 22:23:02	mz_log_low : -2
+09-13 22:23:02	mz_log_high : 3
+09-13 22:23:02	mz_spacing : log
+09-13 22:23:02	mz_precision : 32
+09-13 22:23:02	resolution : 1
+09-13 22:23:02	max_mz : 1000
+09-13 22:23:02	mz_transformation : log10over3
+09-13 22:23:02	sinus_embed_dim : 64
+09-13 22:23:02	aggregator : sum
+09-13 22:23:02	wt_contr : 0.5
+09-13 22:23:02	wt_fp : 0.5
+09-13 22:23:02	fp_len : 4096
+09-13 22:23:02	frz_contr : True
+09-13 22:23:02	contr_trg : True
+09-13 22:23:02	augment : False
+09-13 22:23:02	fp_loss : bce
+09-13 22:23:02	data_dir : data/
+09-13 22:23:02	early_stopping_patience : 50
+09-13 22:23:02	early_stopping_patience_contr : 100
+09-13 22:23:02	tfm_dim : 512
+09-13 22:23:02	tfm_dropout : 0.1
+09-13 22:23:02	tfm_nhead : 4
+09-13 22:23:02	num_tfm_layers : 3
+09-13 22:23:02	dim_feedforward : 256
+09-13 22:23:02	spec_enc : MLP_BIN
+09-13 22:23:02	inter : False
+09-13 22:23:04	Loading Contrastive Data...
+09-13 22:23:04	Done Loading Contrastive Data with 9 objects
+09-13 22:23:06	Starting Contrastive Training...
+09-13 22:23:07	Epoch 1 / 2000, train_contr_loss: 4.5954
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:07	Epoch 2 / 2000, train_contr_loss: 4.9371
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:07	Epoch 3 / 2000, train_contr_loss: 4.8806
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:07	Epoch 4 / 2000, train_contr_loss: 4.5845
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:07	Epoch 5 / 2000, train_contr_loss: 4.9717
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:07	Epoch 6 / 2000, train_contr_loss: 4.9660
+09-13 22:23:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 7 / 2000, train_contr_loss: 4.6604
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 8 / 2000, train_contr_loss: 4.3423
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:08	Epoch 9 / 2000, train_contr_loss: 4.8081
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 10 / 2000, train_contr_loss: 4.4273
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 11 / 2000, train_contr_loss: 4.7157
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 12 / 2000, train_contr_loss: 5.0016
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 13 / 2000, train_contr_loss: 4.3635
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 14 / 2000, train_contr_loss: 4.2022
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:08	Epoch 15 / 2000, train_contr_loss: 4.1769
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:08	Epoch 16 / 2000, train_contr_loss: 4.4185
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 17 / 2000, train_contr_loss: 4.3310
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 18 / 2000, train_contr_loss: 3.7897
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:08	Epoch 19 / 2000, train_contr_loss: 3.9343
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 20 / 2000, train_contr_loss: 4.4153
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 21 / 2000, train_contr_loss: 4.2372
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 22 / 2000, train_contr_loss: 3.9658
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 23 / 2000, train_contr_loss: 4.1310
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 24 / 2000, train_contr_loss: 4.5074
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 25 / 2000, train_contr_loss: 4.4056
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:08	Epoch 26 / 2000, train_contr_loss: 4.0032
+09-13 22:23:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 27 / 2000, train_contr_loss: 4.3200
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 28 / 2000, train_contr_loss: 3.9097
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 29 / 2000, train_contr_loss: 4.1405
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 30 / 2000, train_contr_loss: 4.2517
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 31 / 2000, train_contr_loss: 3.6083
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:09	Epoch 32 / 2000, train_contr_loss: 3.8567
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 33 / 2000, train_contr_loss: 3.0868
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:09	Epoch 34 / 2000, train_contr_loss: 3.5268
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 35 / 2000, train_contr_loss: 4.0712
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 36 / 2000, train_contr_loss: 3.6015
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 37 / 2000, train_contr_loss: 3.8943
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 38 / 2000, train_contr_loss: 3.4232
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 39 / 2000, train_contr_loss: 3.6701
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 40 / 2000, train_contr_loss: 4.0476
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 41 / 2000, train_contr_loss: 3.2748
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 42 / 2000, train_contr_loss: 3.5224
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 43 / 2000, train_contr_loss: 3.3495
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 44 / 2000, train_contr_loss: 2.9232
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:09	Epoch 45 / 2000, train_contr_loss: 2.9677
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:09	Epoch 46 / 2000, train_contr_loss: 2.2698
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:09	Epoch 47 / 2000, train_contr_loss: 2.5525
+09-13 22:23:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:09	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 48 / 2000, train_contr_loss: 2.8111
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 49 / 2000, train_contr_loss: 2.9323
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 50 / 2000, train_contr_loss: 3.2371
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 51 / 2000, train_contr_loss: 2.2865
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 52 / 2000, train_contr_loss: 1.9944
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:10	Epoch 53 / 2000, train_contr_loss: 1.9680
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:10	Epoch 54 / 2000, train_contr_loss: 2.4875
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 55 / 2000, train_contr_loss: 1.9810
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 56 / 2000, train_contr_loss: 1.7836
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:10	Epoch 57 / 2000, train_contr_loss: 1.1506
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:10	Epoch 58 / 2000, train_contr_loss: 1.8986
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 59 / 2000, train_contr_loss: 1.5470
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 60 / 2000, train_contr_loss: 1.9020
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 61 / 2000, train_contr_loss: 1.1882
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 62 / 2000, train_contr_loss: 1.2144
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 63 / 2000, train_contr_loss: 0.7980
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:10	Epoch 64 / 2000, train_contr_loss: 0.9275
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 65 / 2000, train_contr_loss: 1.7725
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 66 / 2000, train_contr_loss: 1.1197
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:10	Epoch 67 / 2000, train_contr_loss: 1.0850
+09-13 22:23:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:11	Epoch 68 / 2000, train_contr_loss: 0.8121
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:11	Epoch 69 / 2000, train_contr_loss: 0.8742
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:11	Epoch 70 / 2000, train_contr_loss: 1.3957
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:11	Epoch 71 / 2000, train_contr_loss: 0.3740
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_best.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_best.pt
+09-13 22:23:11	Epoch 72 / 2000, train_contr_loss: 0.8790
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:23:11	Epoch 73 / 2000, train_contr_loss: 0.8584
+09-13 22:23:11	saving MolEnc weights to data/pretrained_mol_enc_model_1757816586421_current.pt
+09-13 22:23:11	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816586421_current.pt
+09-13 22:24:50	Values of Hyperparameters:
+09-13 22:24:50	exp : massspecgym
+09-13 22:24:50	fp_path : ecfp_3_4096
+09-13 22:24:50	use_sampling : False
+09-13 22:24:50	element_list : ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si', 'H']
+09-13 22:24:50	atom_feature : full
+09-13 22:24:50	bond_feature : full
+09-13 22:24:50	batch_size_train_contr : 128
+09-13 22:24:50	batch_size_train_contr_cand : 128
+09-13 22:24:50	batch_size_train_final : 128
+09-13 22:24:50	batch_size_val_final : 1280
+09-13 22:24:50	spec_type : ['[M+H]+', '[M+Na]+']
+09-13 22:24:50	load_dicts : False
+09-13 22:24:50	ignore_test_contr : True
+09-13 22:24:50	num_epoch_contr : 2000
+09-13 22:24:50	num_epoch_final : 100
+09-13 22:24:50	contr_temp : 0.05
+09-13 22:24:50	aug_cands : False
+09-13 22:24:50	aug_cands_wt : 0.1
+09-13 22:24:50	cand_aug_random : False
+09-13 22:24:50	gnn_channels : [64, 128, 256]
+09-13 22:24:50	attn_heads : [12, 12, 12]
+09-13 22:24:50	gnn_type : gcn
+09-13 22:24:50	num_gnn_layers : 3
+09-13 22:24:50	gnn_hidden_dim : 512
+09-13 22:24:50	gnn_out_feat : 196
+09-13 22:24:50	global_pooling : max
+09-13 22:24:50	gnn_dropout : 0.2
+09-13 22:24:50	contr_lr : 0.0005
+09-13 22:24:50	final_lr : 5e-06
+09-13 22:24:50	final_embedding_dim : 512
+09-13 22:24:50	fc_dropout : 0.4
+09-13 22:24:50	spec_embedding_dim : 1024
+09-13 22:24:50	debug : False
+09-13 22:24:50	logfile : run.log
+09-13 22:24:50	mz_log_low : -2
+09-13 22:24:50	mz_log_high : 3
+09-13 22:24:50	mz_spacing : log
+09-13 22:24:50	mz_precision : 32
+09-13 22:24:50	resolution : 1
+09-13 22:24:50	max_mz : 1000
+09-13 22:24:50	mz_transformation : log10over3
+09-13 22:24:50	sinus_embed_dim : 64
+09-13 22:24:50	aggregator : sum
+09-13 22:24:50	wt_contr : 0.5
+09-13 22:24:50	wt_fp : 0.5
+09-13 22:24:50	fp_len : 4096
+09-13 22:24:50	frz_contr : True
+09-13 22:24:50	contr_trg : True
+09-13 22:24:50	augment : False
+09-13 22:24:50	fp_loss : bce
+09-13 22:24:50	data_dir : data/
+09-13 22:24:50	early_stopping_patience : 50
+09-13 22:24:50	early_stopping_patience_contr : 100
+09-13 22:24:50	tfm_dim : 512
+09-13 22:24:50	tfm_dropout : 0.1
+09-13 22:24:50	tfm_nhead : 4
+09-13 22:24:50	num_tfm_layers : 3
+09-13 22:24:50	dim_feedforward : 256
+09-13 22:24:50	spec_enc : MLP_BIN
+09-13 22:24:50	inter : False
+09-13 22:24:52	Loading Contrastive Data...
+09-13 22:28:04	Done Loading Contrastive Data with 16071 objects
+09-13 22:28:06	Starting Contrastive Training...
+09-13 22:28:24	Epoch 1 / 2000, train_contr_loss: 9.3931
+09-13 22:28:24	saving MolEnc weights to data/pretrained_mol_enc_model_1757816886576_best.pt
+09-13 22:28:24	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816886576_best.pt
+09-13 22:28:32	Epoch 2 / 2000, train_contr_loss: 8.5776
+09-13 22:28:32	saving MolEnc weights to data/pretrained_mol_enc_model_1757816886576_best.pt
+09-13 22:28:32	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757816886576_best.pt
+09-13 22:30:01	Values of Hyperparameters:
+09-13 22:30:01	exp : massspecgym
+09-13 22:30:01	fp_path : ecfp_3_4096
+09-13 22:30:01	use_sampling : False
+09-13 22:30:01	element_list : ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si', 'H']
+09-13 22:30:01	atom_feature : full
+09-13 22:30:01	bond_feature : full
+09-13 22:30:01	batch_size_train_contr : 128
+09-13 22:30:01	batch_size_train_contr_cand : 128
+09-13 22:30:01	batch_size_train_final : 128
+09-13 22:30:01	batch_size_val_final : 1280
+09-13 22:30:01	spec_type : ['[M+H]+', '[M+Na]+']
+09-13 22:30:01	load_dicts : False
+09-13 22:30:01	ignore_test_contr : True
+09-13 22:30:01	num_epoch_contr : 2000
+09-13 22:30:01	num_epoch_final : 100
+09-13 22:30:01	contr_temp : 0.05
+09-13 22:30:01	aug_cands : False
+09-13 22:30:01	aug_cands_wt : 0.1
+09-13 22:30:01	cand_aug_random : False
+09-13 22:30:01	gnn_channels : [64, 128, 256]
+09-13 22:30:01	attn_heads : [12, 12, 12]
+09-13 22:30:01	gnn_type : gcn
+09-13 22:30:01	num_gnn_layers : 3
+09-13 22:30:01	gnn_hidden_dim : 512
+09-13 22:30:01	gnn_out_feat : 196
+09-13 22:30:01	global_pooling : max
+09-13 22:30:01	gnn_dropout : 0.2
+09-13 22:30:01	contr_lr : 0.0005
+09-13 22:30:01	final_lr : 5e-06
+09-13 22:30:01	final_embedding_dim : 512
+09-13 22:30:01	fc_dropout : 0.4
+09-13 22:30:01	spec_embedding_dim : 1024
+09-13 22:30:01	debug : False
+09-13 22:30:01	logfile : run.log
+09-13 22:30:01	mz_log_low : -2
+09-13 22:30:01	mz_log_high : 3
+09-13 22:30:01	mz_spacing : log
+09-13 22:30:01	mz_precision : 32
+09-13 22:30:01	resolution : 1
+09-13 22:30:01	max_mz : 1000
+09-13 22:30:01	mz_transformation : log10over3
+09-13 22:30:01	sinus_embed_dim : 64
+09-13 22:30:01	aggregator : sum
+09-13 22:30:01	wt_contr : 0.5
+09-13 22:30:01	wt_fp : 0.5
+09-13 22:30:01	fp_len : 4096
+09-13 22:30:01	frz_contr : True
+09-13 22:30:01	contr_trg : True
+09-13 22:30:01	augment : False
+09-13 22:30:01	fp_loss : bce
+09-13 22:30:01	data_dir : data/
+09-13 22:30:01	early_stopping_patience : 50
+09-13 22:30:01	early_stopping_patience_contr : 100
+09-13 22:30:01	tfm_dim : 512
+09-13 22:30:01	tfm_dropout : 0.1
+09-13 22:30:01	tfm_nhead : 4
+09-13 22:30:01	num_tfm_layers : 3
+09-13 22:30:01	dim_feedforward : 256
+09-13 22:30:01	spec_enc : MLP_BIN
+09-13 22:30:01	inter : False
+09-13 22:30:02	Loading Contrastive Data...
+09-13 22:33:11	Done Loading Contrastive Data with 16071 objects
+09-13 22:33:12	Starting Contrastive Training...
+09-13 22:33:30	Epoch 1 / 2000, train_contr_loss: 9.4767
+09-13 22:33:30	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:33:30	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:33:37	Epoch 2 / 2000, train_contr_loss: 8.6301
+09-13 22:33:37	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:33:37	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:33:46	Epoch 3 / 2000, train_contr_loss: 8.1790
+09-13 22:33:46	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:33:46	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:33:54	Epoch 4 / 2000, train_contr_loss: 7.7050
+09-13 22:33:54	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:33:54	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:02	Epoch 5 / 2000, train_contr_loss: 7.5124
+09-13 22:34:02	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:02	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:10	Epoch 6 / 2000, train_contr_loss: 7.2836
+09-13 22:34:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:18	Epoch 7 / 2000, train_contr_loss: 6.8560
+09-13 22:34:18	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:18	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:26	Epoch 8 / 2000, train_contr_loss: 6.7910
+09-13 22:34:26	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:26	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:35	Epoch 9 / 2000, train_contr_loss: 6.5644
+09-13 22:34:35	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:35	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:43	Epoch 10 / 2000, train_contr_loss: 6.2997
+09-13 22:34:43	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:43	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:51	Epoch 11 / 2000, train_contr_loss: 6.2197
+09-13 22:34:51	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:51	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:34:59	Epoch 12 / 2000, train_contr_loss: 6.0635
+09-13 22:34:59	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:34:59	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:08	Epoch 13 / 2000, train_contr_loss: 5.8340
+09-13 22:35:08	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:08	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:16	Epoch 14 / 2000, train_contr_loss: 5.7566
+09-13 22:35:16	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:16	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:24	Epoch 15 / 2000, train_contr_loss: 5.5866
+09-13 22:35:24	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:24	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:32	Epoch 16 / 2000, train_contr_loss: 5.4773
+09-13 22:35:32	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:32	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:40	Epoch 17 / 2000, train_contr_loss: 5.3796
+09-13 22:35:40	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:40	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:48	Epoch 18 / 2000, train_contr_loss: 5.2107
+09-13 22:35:48	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:48	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:35:56	Epoch 19 / 2000, train_contr_loss: 5.1301
+09-13 22:35:56	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:35:56	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:36:05	Epoch 20 / 2000, train_contr_loss: 5.0569
+09-13 22:36:05	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:36:05	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:36:13	Epoch 21 / 2000, train_contr_loss: 4.9073
+09-13 22:36:13	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:36:13	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:36:21	Epoch 22 / 2000, train_contr_loss: 4.9087
+09-13 22:36:21	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:36:21	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:36:29	Epoch 23 / 2000, train_contr_loss: 4.7227
+09-13 22:36:29	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:36:29	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:36:37	Epoch 24 / 2000, train_contr_loss: 4.6108
+09-13 22:36:37	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:36:37	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:36:46	Epoch 25 / 2000, train_contr_loss: 4.6539
+09-13 22:36:46	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:36:46	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:36:54	Epoch 26 / 2000, train_contr_loss: 4.5207
+09-13 22:36:54	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:36:54	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:01	Epoch 27 / 2000, train_contr_loss: 4.3711
+09-13 22:37:01	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:37:01	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:10	Epoch 28 / 2000, train_contr_loss: 4.4599
+09-13 22:37:10	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:37:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:37:18	Epoch 29 / 2000, train_contr_loss: 4.3143
+09-13 22:37:18	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:37:18	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:26	Epoch 30 / 2000, train_contr_loss: 4.2014
+09-13 22:37:26	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:37:26	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:34	Epoch 31 / 2000, train_contr_loss: 4.2218
+09-13 22:37:34	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:37:34	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:37:43	Epoch 32 / 2000, train_contr_loss: 4.1513
+09-13 22:37:43	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:37:43	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:50	Epoch 33 / 2000, train_contr_loss: 4.0242
+09-13 22:37:50	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:37:50	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:37:59	Epoch 34 / 2000, train_contr_loss: 4.1336
+09-13 22:37:59	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:37:59	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:38:06	Epoch 35 / 2000, train_contr_loss: 3.9873
+09-13 22:38:06	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:38:06	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:38:15	Epoch 36 / 2000, train_contr_loss: 3.8919
+09-13 22:38:15	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:38:15	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:38:23	Epoch 37 / 2000, train_contr_loss: 3.9849
+09-13 22:38:23	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:38:23	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:38:31	Epoch 38 / 2000, train_contr_loss: 3.8359
+09-13 22:38:31	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:38:31	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:38:39	Epoch 39 / 2000, train_contr_loss: 3.7051
+09-13 22:38:39	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:38:39	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:38:47	Epoch 40 / 2000, train_contr_loss: 3.8862
+09-13 22:38:47	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:38:47	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:38:56	Epoch 41 / 2000, train_contr_loss: 3.7048
+09-13 22:38:56	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:38:56	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:39:04	Epoch 42 / 2000, train_contr_loss: 3.6278
+09-13 22:39:04	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:39:04	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:39:12	Epoch 43 / 2000, train_contr_loss: 3.7425
+09-13 22:39:12	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:39:12	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:39:20	Epoch 44 / 2000, train_contr_loss: 3.5837
+09-13 22:39:20	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:39:20	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:39:28	Epoch 45 / 2000, train_contr_loss: 3.4951
+09-13 22:39:28	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:39:28	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:39:36	Epoch 46 / 2000, train_contr_loss: 3.6078
+09-13 22:39:36	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:39:36	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:39:45	Epoch 47 / 2000, train_contr_loss: 3.4952
+09-13 22:39:45	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:39:45	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:39:52	Epoch 48 / 2000, train_contr_loss: 3.3834
+09-13 22:39:52	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:39:52	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:40:01	Epoch 49 / 2000, train_contr_loss: 3.5185
+09-13 22:40:01	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:40:01	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:40:09	Epoch 50 / 2000, train_contr_loss: 3.3647
+09-13 22:40:09	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:40:10	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:40:18	Epoch 51 / 2000, train_contr_loss: 3.2795
+09-13 22:40:18	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:40:18	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:40:26	Epoch 52 / 2000, train_contr_loss: 3.4871
+09-13 22:40:26	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:40:26	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:40:34	Epoch 53 / 2000, train_contr_loss: 3.2758
+09-13 22:40:34	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:40:34	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:40:42	Epoch 54 / 2000, train_contr_loss: 3.2349
+09-13 22:40:42	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:40:42	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:40:51	Epoch 55 / 2000, train_contr_loss: 3.3590
+09-13 22:40:51	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:40:51	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:40:58	Epoch 56 / 2000, train_contr_loss: 3.1997
+09-13 22:40:58	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:40:58	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:41:07	Epoch 57 / 2000, train_contr_loss: 3.0923
+09-13 22:41:07	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:41:07	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:41:15	Epoch 58 / 2000, train_contr_loss: 3.3017
+09-13 22:41:15	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:41:15	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:41:22	Epoch 59 / 2000, train_contr_loss: 3.1536
+09-13 22:41:22	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:41:22	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:41:31	Epoch 60 / 2000, train_contr_loss: 3.0681
+09-13 22:41:31	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:41:31	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:41:38	Epoch 61 / 2000, train_contr_loss: 3.2037
+09-13 22:41:38	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:41:38	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:41:47	Epoch 62 / 2000, train_contr_loss: 3.0328
+09-13 22:41:47	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:41:47	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:41:55	Epoch 63 / 2000, train_contr_loss: 2.9591
+09-13 22:41:55	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_best.pt
+09-13 22:41:55	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_best.pt
+09-13 22:42:03	Epoch 64 / 2000, train_contr_loss: 3.1397
+09-13 22:42:03	saving MolEnc weights to data/pretrained_mol_enc_model_1757817192717_current.pt
+09-13 22:42:03	saving SpecEncMLP_BIN weights to data/pretrained_spec_enc_model_1757817192717_current.pt
+09-13 22:44:44	Values of Hyperparameters:
+09-13 22:44:44	exp : massspecgym
+09-13 22:44:44	fp_path : ecfp_3_4096
+09-13 22:44:44	use_sampling : False
+09-13 22:44:44	element_list : ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si', 'H']
+09-13 22:44:44	atom_feature : full
+09-13 22:44:44	bond_feature : full
+09-13 22:44:44	batch_size_train_contr : 128
+09-13 22:44:44	batch_size_train_contr_cand : 128
+09-13 22:44:44	batch_size_train_final : 128
+09-13 22:44:44	batch_size_val_final : 1280
+09-13 22:44:44	spec_type : ['[M+H]+', '[M+Na]+']
+09-13 22:44:44	load_dicts : False
+09-13 22:44:44	ignore_test_contr : True
+09-13 22:44:44	num_epoch_contr : 2000
+09-13 22:44:44	num_epoch_final : 100
+09-13 22:44:44	contr_temp : 0.05
+09-13 22:44:44	aug_cands : False
+09-13 22:44:44	aug_cands_wt : 0.1
+09-13 22:44:44	cand_aug_random : False
+09-13 22:44:44	gnn_channels : [64, 128, 256]
+09-13 22:44:44	attn_heads : [12, 12, 12]
+09-13 22:44:44	gnn_type : gcn
+09-13 22:44:44	num_gnn_layers : 3
+09-13 22:44:44	gnn_hidden_dim : 512
+09-13 22:44:44	gnn_out_feat : 196
+09-13 22:44:44	global_pooling : max
+09-13 22:44:44	gnn_dropout : 0.2
+09-13 22:44:44	contr_lr : 0.0005
+09-13 22:44:44	final_lr : 5e-06
+09-13 22:44:44	final_embedding_dim : 512
+09-13 22:44:44	fc_dropout : 0.4
+09-13 22:44:44	spec_embedding_dim : 1024
+09-13 22:44:44	debug : False
+09-13 22:44:44	logfile : run.log
+09-13 22:44:44	mz_log_low : -2
+09-13 22:44:44	mz_log_high : 3
+09-13 22:44:44	mz_spacing : log
+09-13 22:44:44	mz_precision : 32
+09-13 22:44:44	resolution : 1
+09-13 22:44:44	max_mz : 1000
+09-13 22:44:44	mz_transformation : log10over3
+09-13 22:44:44	sinus_embed_dim : 64
+09-13 22:44:44	aggregator : sum
+09-13 22:44:44	wt_contr : 0.5
+09-13 22:44:44	wt_fp : 0.5
+09-13 22:44:44	fp_len : 4096
+09-13 22:44:44	frz_contr : True
+09-13 22:44:44	contr_trg : True
+09-13 22:44:44	augment : False
+09-13 22:44:44	fp_loss : bce
+09-13 22:44:44	data_dir : data/
+09-13 22:44:44	early_stopping_patience : 50
+09-13 22:44:44	early_stopping_patience_contr : 100
+09-13 22:44:44	tfm_dim : 512
+09-13 22:44:44	tfm_dropout : 0.1
+09-13 22:44:44	tfm_nhead : 4
+09-13 22:44:44	num_tfm_layers : 3
+09-13 22:44:44	dim_feedforward : 256
+09-13 22:44:44	spec_enc : MLP_BIN
+09-13 22:44:44	inter : False
+09-13 22:44:45	Loading Contrastive Data...
+09-13 22:46:21	Values of Hyperparameters:
+09-13 22:46:21	exp : canopus
+09-13 22:46:21	fp_path : ecfp_3_4096
+09-13 22:46:21	use_sampling : False
+09-13 22:46:21	element_list : ['Se', 'Si', 'S', 'N', 'I', 'B', 'Br', 'Cl', 'F', 'C', 'O', 'P']
+09-13 22:46:21	atom_feature : full
+09-13 22:46:21	bond_feature : full
+09-13 22:46:21	batch_size_train_contr : 32
+09-13 22:46:21	batch_size_train_contr_cand : 32
+09-13 22:46:21	batch_size_train_final : 64
+09-13 22:46:21	batch_size_val_final : 128
+09-13 22:46:21	spec_type : ['[M+H]+']
+09-13 22:46:21	load_dicts : True
+09-13 22:46:21	ignore_test_contr : True
+09-13 22:46:21	num_epoch_contr : 1000
+09-13 22:46:21	num_epoch_final : 100
+09-13 22:46:21	contr_temp : 0.05
+09-13 22:46:21	aug_cands : False
+09-13 22:46:21	aug_cands_wt : 0.1
+09-13 22:46:21	cand_aug_random : False
+09-13 22:46:21	gnn_channels : [64, 128, 256, 512, 1024]
+09-13 22:46:21	attn_heads : [12, 12, 12, 12, 12]
+09-13 22:46:21	gnn_type : gcn
+09-13 22:46:21	num_gnn_layers : 5
+09-13 22:46:21	gnn_hidden_dim : 1024
+09-13 22:46:21	gnn_out_feat : 196
+09-13 22:46:21	global_pooling : max
+09-13 22:46:21	gnn_dropout : 0.2
+09-13 22:46:21	contr_lr : 0.0005
+09-13 22:46:21	final_lr : 5e-06
+09-13 22:46:21	final_embedding_dim : 1024
+09-13 22:46:21	fc_dropout : 0.4
+09-13 22:46:21	spec_embedding_dim : 1024
+09-13 22:46:21	debug : True
+09-13 22:46:21	logfile : run.log
+09-13 22:46:21	mz_log_low : -2
+09-13 22:46:21	mz_log_high : 3
+09-13 22:46:21	mz_spacing : log
+09-13 22:46:21	mz_precision : 32
+09-13 22:46:21	resolution : 1
+09-13 22:46:21	max_mz : 1000
+09-13 22:46:21	mz_transformation : log10over3
+09-13 22:46:21	sinus_embed_dim : 64
+09-13 22:46:21	aggregator : sum
+09-13 22:46:21	wt_contr : 0.5
+09-13 22:46:21	wt_fp : 0.5
+09-13 22:46:21	fp_len : 4096
+09-13 22:46:21	frz_contr : True
+09-13 22:46:21	contr_trg : True
+09-13 22:46:21	augment : False
+09-13 22:46:21	fp_loss : bce
+09-13 22:46:21	data_dir : data/
+09-13 22:46:21	early_stopping_patience : 50
+09-13 22:46:21	early_stopping_patience_contr : 100
+09-13 22:46:21	tfm_dim : 512
+09-13 22:46:21	tfm_dropout : 0.1
+09-13 22:46:21	tfm_nhead : 4
+09-13 22:46:21	num_tfm_layers : 3
+09-13 22:46:21	dim_feedforward : 256
+09-13 22:46:21	spec_enc : MLP_BIN
+09-13 22:46:21	inter : False
+09-13 22:46:21	pretrained_mol_enc_model : data/pretrained_mol_enc_model_1741657030683_best.pt
+09-13 22:46:21	pretrained_spec_enc_model : data/pretrained_spec_enc_model_1741657030683_best.pt
+09-13 22:46:39	Values of Hyperparameters:
+09-13 22:46:39	exp : canopus
+09-13 22:46:39	fp_path : ecfp_3_4096
+09-13 22:46:39	use_sampling : False
+09-13 22:46:39	element_list : ['Se', 'Si', 'S', 'N', 'I', 'B', 'Br', 'Cl', 'F', 'C', 'O', 'P']
+09-13 22:46:39	atom_feature : full
+09-13 22:46:39	bond_feature : full
+09-13 22:46:39	batch_size_train_contr : 32
+09-13 22:46:39	batch_size_train_contr_cand : 32
+09-13 22:46:39	batch_size_train_final : 64
+09-13 22:46:39	batch_size_val_final : 128
+09-13 22:46:39	spec_type : ['[M+H]+']
+09-13 22:46:39	load_dicts : True
+09-13 22:46:39	ignore_test_contr : True
+09-13 22:46:39	num_epoch_contr : 1000
+09-13 22:46:39	num_epoch_final : 100
+09-13 22:46:39	contr_temp : 0.05
+09-13 22:46:39	aug_cands : False
+09-13 22:46:39	aug_cands_wt : 0.1
+09-13 22:46:39	cand_aug_random : False
+09-13 22:46:39	gnn_channels : [64, 128, 256, 512, 1024]
+09-13 22:46:39	attn_heads : [12, 12, 12, 12, 12]
+09-13 22:46:39	gnn_type : gcn
+09-13 22:46:39	num_gnn_layers : 5
+09-13 22:46:39	gnn_hidden_dim : 1024
+09-13 22:46:39	gnn_out_feat : 196
+09-13 22:46:39	global_pooling : max
+09-13 22:46:39	gnn_dropout : 0.2
+09-13 22:46:39	contr_lr : 0.0005
+09-13 22:46:39	final_lr : 5e-06
+09-13 22:46:39	final_embedding_dim : 1024
+09-13 22:46:39	fc_dropout : 0.4
+09-13 22:46:39	spec_embedding_dim : 1024
+09-13 22:46:39	debug : True
+09-13 22:46:39	logfile : run.log
+09-13 22:46:39	mz_log_low : -2
+09-13 22:46:39	mz_log_high : 3
+09-13 22:46:39	mz_spacing : log
+09-13 22:46:39	mz_precision : 32
+09-13 22:46:39	resolution : 1
+09-13 22:46:39	max_mz : 1000
+09-13 22:46:39	mz_transformation : log10over3
+09-13 22:46:39	sinus_embed_dim : 64
+09-13 22:46:39	aggregator : sum
+09-13 22:46:39	wt_contr : 0.5
+09-13 22:46:39	wt_fp : 0.5
+09-13 22:46:39	fp_len : 4096
+09-13 22:46:39	frz_contr : True
+09-13 22:46:39	contr_trg : True
+09-13 22:46:39	augment : False
+09-13 22:46:39	fp_loss : bce
+09-13 22:46:39	data_dir : data/
+09-13 22:46:39	early_stopping_patience : 50
+09-13 22:46:39	early_stopping_patience_contr : 100
+09-13 22:46:39	tfm_dim : 512
+09-13 22:46:39	tfm_dropout : 0.1
+09-13 22:46:39	tfm_nhead : 4
+09-13 22:46:39	num_tfm_layers : 3
+09-13 22:46:39	dim_feedforward : 256
+09-13 22:46:39	spec_enc : MLP_BIN
+09-13 22:46:39	inter : False
+09-13 22:46:39	pretrained_mol_enc_model : data/pretrained_mol_enc_model_1741657030683_best.pt
+09-13 22:46:39	pretrained_spec_enc_model : data/pretrained_spec_enc_model_1741657030683_best.pt

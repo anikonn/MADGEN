@@ -19,7 +19,7 @@ enable_progress_bar: True
 
 # Data
 dataset: msgym
-batch_size: 256
+batch_size: 64
 num_workers: 47
 shuffle: True
 extra_nodes: True
@@ -48,4 +48,4 @@ loss_type: vlb
 condition: True
 
 # Checkpoint
-resume: madgen_msgym_final_100steps_03_03_22_55_23
+resume: 
