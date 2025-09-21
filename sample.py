@@ -225,7 +225,7 @@ if __name__ == "__main__":
         "--n_steps", action="store", type=int, required=False, default=None
     )
     parser.add_argument(
-        "--sampling_seed", action="store", type=int, required=False, default=None
+        "--sampling_seed", action="store", type=int, required=False, default=123
     )
     parser.add_argument(
         "--use_one_hot", action="store_true", required=False, default=False
