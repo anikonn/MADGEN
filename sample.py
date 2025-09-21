@@ -122,7 +122,7 @@ def main(args):
                 keep_chain=32,
                 number_chain_steps_to_save=40,
                 sample_idx=sample_idx,
-                save_true_reactants=True,
+                save_true_targets=True,
                 use_one_hot=args.use_one_hot,
             )
 
