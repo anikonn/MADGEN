@@ -640,7 +640,7 @@ class MarkovBridge(pl.LightningModule):
         # Sample
         sampled_s.mask(node_mask, collapse=True)
         X, E, y = sampled_s.X, sampled_s.E, sampled_s.y
-
+        
         # Prepare the chain for saving
         if keep_chain > 0:
             final_X_chain = X[:keep_chain]
