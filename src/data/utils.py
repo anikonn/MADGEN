@@ -1,3 +1,6 @@
+import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import torch
 import torch_geometric
 

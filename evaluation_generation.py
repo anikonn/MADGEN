@@ -79,22 +79,12 @@ if __name__ == "__main__":
         mces_thld = 100
         mces_cache = {}
         myopic_mces = MyopicMCES(
-            threshold=20,
-            solver='HiGHS',
-            solver_options={
-                'msg': 0,
-                'log_to_console': False,
-                'output_flag': False,
-                'time_limit': 10,  # Optional: add timeout
-                'log_file': os.devnull,  # Redirect logs to nowhere
-                'highs_debug_level': 0,
-                'highs_verbosity': 'off'
-                }
+            threshold=20
         )
         for k in ks:
             result_metric = {"accuracy": 0, "similarity": 0, "MCES": 0}
             count = 0
-            sub_dfs = split_dataframe(df1, chunk_size=50)
+            sub_dfs = split_dataframe(df1, chunk_size=100)
             for df in tqdm(sub_dfs):
                 smile = list(df["true"])[0]
                 pred_smiles = sorted(list(df["pred"]), key=lambda x: list(df["pred"]).count(x), reverse=True)
@@ -124,19 +114,19 @@ if __name__ == "__main__":
                 #     if Chem.MolToSmiles(mol) != Chem.MolToSmiles(GetScaffoldForMol(Chem.MolFromSmiles(scaf_smi))):
                 #         print('scaffold match', smile)
                 result_metric["accuracy"] += int(in_top_k)
-                # dists = []
+                dists = []
                 # pairs = [(smile, pred) for pred, pred_mol in zip(pred_smiles, pred_mols) if pred_mol is not None]
                 # results = calculate_mces(myopic_mces, pairs)
 
                 # dists = [results.get((smile, pred), mces_thld) for pred in pred_smiles]
-                # for pred, pred_mol in zip(pred_smiles, pred_mols):
-                #     if pred_mol is None:
-                #         dists.append(mces_thld)
-                #     else:
-                #         if (smile, pred) not in mces_cache:
-                #             mce_val = myopic_mces(smile, pred)                        
-                #             mces_cache[(smile, pred)] = mce_val
-                #         dists.append(mces_cache[(smile, pred)])
+                for pred, pred_mol in zip(pred_smiles, pred_mols):
+                    if pred_mol is None:
+                        dists.append(mces_thld)
+                    else:
+                        if (smile, pred) not in mces_cache:
+                            mce_val = myopic_mces(smile, pred)                        
+                            mces_cache[(smile, pred)] = mce_val
+                        dists.append(mces_cache[(smile, pred)])
                 mol_fp = GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048)
                 pred_fps = [
                     GetMorganFingerprintAsBitVect(pred, radius=2, nBits=2048) if pred is not None else None for pred in pred_mols
@@ -145,7 +135,7 @@ if __name__ == "__main__":
                     TanimotoSimilarity(mol_fp, pred) if pred is not None else 0 for pred in pred_fps
                 ]
                 result_metric["similarity"] += max(sims)
-                # result_metric["MCES"] += min(min(dists), mces_thld)
+                result_metric["MCES"] += min(min(dists), mces_thld)
             for key in result_metric:
                 result_metric[key] = result_metric[key] / len(sub_dfs)
             print(dataset, k, result_metric)

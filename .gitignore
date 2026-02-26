@@ -2,6 +2,7 @@
 __pycache__
 **/*.ckpt
 logs/*
+results/*
 checkpoints/*
 data/*/*/*.pt
 data/*/*/*.pkl

@@ -1,6 +1,11 @@
 import argparse
 import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+import torch
 import pandas as pd
+from pathlib import Path
+import numpy as np
 
 from src.utils import disable_rdkit_logging, parse_yaml_config, set_deterministic
 from src.analysis.rdkit_functions import build_molecule
@@ -8,23 +13,40 @@ from src.frameworks.markov_bridge import MarkovBridge
 from src.data.msgym_dataset import MsGymDataModule, MsGyminfos
 from src.data.canopus_dataset import CanopusDataModule, Canopusinfos
 from src.analysis.visualization import MolecularVisualization
-
+from src.frameworks import diffusion_utils
 from rdkit import Chem
+from rdkit.Chem.MolStandardize import rdMolStandardize
 from tqdm import tqdm
 
 from pdb import set_trace
 
 
+def _to_float(x):
+    try:
+        if hasattr(x, "item"):           # torch/np scalar
+            return float(x.item())
+        if isinstance(x, (list, tuple)) and len(x) == 1:
+            return float(x[0])
+        return float(x)
+    except Exception:
+        return float("nan")
+
+_LF = rdMolStandardize.LargestFragmentChooser()
+
 def main(args):
+    set_deterministic(args.sampling_seed)
     torch_device = "cuda:0" if args.device == "gpu" else "cpu"
+    gen = torch.Generator(device=torch_device)
+    gen.manual_seed(args.sampling_seed if args.sampling_seed is not None else 0)
+    diffusion_utils.set_sampling_generator(gen)
     data_root = os.path.join(args.data, args.dataset)
     checkpoint_name = args.checkpoint.split("/")[-1].replace(".ckpt", "")
 
-    output_dir = os.path.join(args.samples, f"{args.dataset}_{args.mode}")
+    output_dir = os.path.join(args.samples, f"{Path(args.msgym_pkl).stem}")
     if args.table_name != '':
         table_name = f"{args.table_name}.csv"
     else: 
-        table_name = f"{checkpoint_name}_T={args.n_steps}_n={args.n_samples}_seed={args.sampling_seed}.csv"
+        table_name = f"n={args.n_samples}_seed={args.sampling_seed}.csv"
     table_path = os.path.join(output_dir, table_name)
 
     skip_first_n = 0
@@ -56,7 +78,10 @@ def main(args):
             shuffle=args.shuffle,
             extra_nodes=args.extra_nodes,
             swap=args.swap,
-            evaluation=False,
+            # added
+            msgym_pkl=args.msgym_pkl,
+            ranks_pkl=args.ranks_pkl,
+            seed=args.sampling_seed 
         )
         dataset_infos = MsGyminfos(datamodule)
     else:
@@ -66,12 +91,10 @@ def main(args):
             num_workers=args.num_workers,
             shuffle=args.shuffle,
             extra_nodes=args.extra_nodes,
-            swap=args.swap,
-            evaluation=False,
+            swap=args.swap
         )
         dataset_infos = Canopusinfos(datamodule)
 
-    set_deterministic(args.sampling_seed)
     model.eval().to(torch_device)
     visualization_tools = MolecularVisualization(dataset_infos)
 
@@ -93,6 +116,8 @@ def main(args):
         if args.mode == "test"
         else datamodule.val_dataloader()
     )
+    print("num test batches:", len(dataloader))
+    print("dataset length  :", len(dataloader.dataset))
     for i, data in enumerate(tqdm(dataloader)):
         if i * args.batch_size < skip_first_n:
             print(i , skip_first_n)
@@ -122,7 +147,7 @@ def main(args):
                 keep_chain=args.batch_size,
                 number_chain_steps_to_save=40,
                 sample_idx=sample_idx,
-                save_true_targets=True,
+                #save_true_targets=True,
                 use_one_hot=args.use_one_hot,
             )
 
@@ -170,17 +195,27 @@ def main(args):
             grouped_ells
             ):
 
-            true_n_dummy_atoms = 0
+            # --- TRUE ---
             true_mol = build_molecule(
                 true_mol[0], true_mol[1], dataset_infos.atom_decoder
             )
+            try:
+                true_mol = _LF.choose(true_mol)
+            except Exception:
+                pass
             true_smi = Chem.MolToSmiles(true_mol, canonical=True)
 
+            # --- SCAFFOLD / PRODUCT ---
             product_mol = build_molecule(
                 product_mol[0], product_mol[1], dataset_infos.atom_decoder
             )
-            product_smi = Chem.MolToSmiles(product_mol)
+            try:
+                product_mol = _LF.choose(product_mol)
+            except Exception:
+                pass
+            product_smi = Chem.MolToSmiles(product_mol, canonical=True)
 
+            # --- PREDICTIONS ---
             for pred_mol, pred_score, nll, ell in zip(
                 pred_mols, pred_scores, nlls, ells
             ):
@@ -190,13 +225,18 @@ def main(args):
                     dataset_infos.atom_decoder,
                     return_n_dummy_atoms=True,
                 )
-                pred_smi = Chem.MolToSmiles(pred_mol)
+                try:
+                    pred_mol = _LF.choose(pred_mol)
+                except Exception:
+                    pass
+                pred_smi = Chem.MolToSmiles(pred_mol, canonical=True)
+
                 true_molecules_smiles.append(true_smi)
                 product_molecules_smiles.append(product_smi)
                 pred_molecules_smiles.append(pred_smi)
-                computed_scores.append(pred_score)
-                computed_nlls.append(nll)
-                computed_ells.append(ell)
+                computed_scores.append(_to_float(pred_score))
+                computed_nlls.append(_to_float(nll))
+                computed_ells.append(_to_float(ell))
 
         table = pd.DataFrame(
             {
@@ -210,6 +250,16 @@ def main(args):
         )
         full_table = pd.concat([prev_table, table])
         full_table.to_csv(table_path, index=False)
+    # Optional: delete cached test file after run
+    if args.delete_test_cache:
+        root = os.path.join(args.data, args.dataset)
+        processed = os.path.join(root, "processed", "msgym_test_final.pt")
+        try:
+            if os.path.exists(processed):
+                os.remove(processed)
+                print(f"Deleted {processed}")
+        except Exception as e:
+            print(f"Could not delete {processed}: {e}")
 
 
 if __name__ == "__main__":
@@ -233,7 +283,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--table_name", action="store", type=str, required=False, default=''
     )
-    main(args=parse_yaml_config(parser.parse_args()))
+    # added
+    parser.add_argument("--msgym_pkl", type=str, default=None,
+                        help="Path to msgym.pkl to use instead of the default.")
+    parser.add_argument("--ranks_pkl", type=str, default=None,
+                        help="Path to ranks_msgym_pred.pkl (only used for test mode).")
+    parser.add_argument("--delete_test_cache", action="store_true",
+                    help="Delete processed/msgym_test_final.pt after run.")
+    parsed_args, _ = parser.parse_known_args()
+    main(args=parse_yaml_config(parsed_args))
 
 
 

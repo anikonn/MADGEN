@@ -1,4 +1,7 @@
 import numpy as np
+import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import torch
 from src.data import utils
 from src.frameworks import diffusion_utils
@@ -104,24 +107,27 @@ class DiscreteUniformTransition:
         if self.y_classes > 0:
             self.u_y = self.u_y / self.y_classes
 
-    def get_Qt(self, beta_t, device):
-        """ Returns one-step transition matrices for X and E, from step t - 1 to step t.
-        Qt = (1 - beta_t) * I + beta_t / K
+    def get_Qt(self, *, beta_t, X_T, E_T, y_T, node_mask, device):
+        # ... build q_x (bs, n, dx_in, dx_out) and q_e (bs, n, n, de_in, de_out) ...
 
-        beta_t: (bs)                         noise level between 0 and 1
-        returns: qx (bs, dx, dx), qe (bs, de, de), qy (bs, dy, dy).
-        """
-        beta_t = beta_t.unsqueeze(1)
-        beta_t = beta_t.to(device)
-        self.u_x = self.u_x.to(device)
-        self.u_e = self.u_e.to(device)
-        self.u_y = self.u_y.to(device)
+        # 1) Node transitions: set absent-node rows to identity
+        mask_x = node_mask.unsqueeze(-1).unsqueeze(-1)            # (bs, n, 1, 1), bool
+        eye_x  = torch.eye(q_x.shape[-1], device=device)          # (dx_out, dx_out)
+        eye_x  = eye_x.expand(q_x.shape[0], q_x.shape[1], -1, -1) # (bs, n, dx_out, dx_out)
 
-        q_x = beta_t * self.u_x + (1 - beta_t) * torch.eye(self.X_classes, device=device).unsqueeze(0)
-        q_e = beta_t * self.u_e + (1 - beta_t) * torch.eye(self.E_classes, device=device).unsqueeze(0)
-        q_y = beta_t * self.u_y + (1 - beta_t) * torch.eye(self.y_classes, device=device).unsqueeze(0)
+        # If dx_in == dx_out this works directly; if your q_x is (dx_in, dx_out) with dx_in==dx_out (=13), ok.
+        # If your implementation stores (dx_out, dx_out), adjust accordingly.
+        q_x = torch.where(mask_x, q_x, eye_x)
 
-        return utils.PlaceHolder(X=q_x, E=q_e, y=q_y)
+        # 2) Edge transitions: set edges touching absent nodes to identity
+        edge_mask = (node_mask.unsqueeze(2) & node_mask.unsqueeze(1))  # (bs, n, n)
+        mask_e = edge_mask.unsqueeze(-1).unsqueeze(-1)                  # (bs, n, n, 1, 1)
+        eye_e = torch.eye(q_e.shape[-1], device=device)                 # (de_out, de_out)
+        eye_e = eye_e.expand(q_e.shape[0], q_e.shape[1], q_e.shape[2], -1, -1)  # (bs, n, n, de_out, de_out)
+
+        q_e = torch.where(mask_e, q_e, eye_e)
+
+        return PlaceHolder(X=q_x, E=q_e, y=None)
 
     def get_Qt_bar(self, alpha_bar_t, device):
         """ Returns t-step transition matrices for X and E, from step 0 to step t.
@@ -237,115 +243,58 @@ class InterpolationTransition:
         self.E_classes = e_classes
         self.y_classes = y_classes
 
+    def _apply_node_mask_identity(self, q_x, node_mask, device):
+        # q_x: (bs, n, dx, dx); node_mask: (bs, n) True=present
+        bs, n, dx, _ = q_x.shape
+        mask4 = node_mask.unsqueeze(-1).unsqueeze(-1)                     # (bs,n,1,1)
+        eye_x = torch.eye(dx, device=device).expand(bs, n, dx, dx)        # (bs,n,dx,dx)
+        return torch.where(mask4, q_x, eye_x)
+
+    def _apply_edge_mask_identity(self, q_e, node_mask, device):
+        # q_e: (bs, n, n, de, de)
+        bs, n, de, _ = q_e.shape[0], q_e.shape[1], q_e.shape[-1], q_e.shape[-1]
+        eye_e = torch.eye(de, device=device).view(1,1,1,de,de).expand(bs, n, n, de, de)
+
+        # self-edges -> identity
+        diag = torch.eye(n, dtype=torch.bool, device=device).view(1, n, n, 1, 1).expand(bs, n, n, 1, 1)
+        q_e = torch.where(diag, eye_e, q_e)
+
+        # edges touching absent node -> identity
+        edge_present = (node_mask.unsqueeze(2) & node_mask.unsqueeze(1))   # (bs,n,n)
+        mask_e = edge_present.unsqueeze(-1).unsqueeze(-1)                  # (bs,n,n,1,1)
+        q_e = torch.where(mask_e, q_e, eye_e)
+        return q_e
+
     def get_Qt(self, beta_t, X_T, E_T, y_T, node_mask, device):
-        """X_T (bs, n, dx), E_T (bs, n, n, de)"""
-        """ Returns two transition matrix for X and E"""
+        beta_t = beta_t.unsqueeze(1).to(device)  # (bs,1)
 
-        beta_t = beta_t.unsqueeze(1)  # (bs, 1, 1)
-        beta_t = beta_t.to(device)
+        # nodes
+        q_x_1 = (1 - beta_t) * torch.eye(self.X_classes, device=device)                 # (bs,dx,dx)
+        q_x_2 = beta_t.unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)  # (bs,n,dx,dx)
+        q_x = q_x_1.unsqueeze(1) + q_x_2                                               # (bs,n,dx,dx)
+        q_x = self._apply_node_mask_identity(q_x, node_mask, device)
 
-        q_x_1 = (1 - beta_t) * torch.eye(self.X_classes, device=device)  # (bs, dx, dx)
-        q_x_2 = beta_t.unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)  # (bs, n, dx, dx)
-        q_x = q_x_1.unsqueeze(1) + q_x_2
-        q_x[~node_mask] = torch.eye(q_x.shape[-1], device=device)
-
-        q_e_1 = (1 - beta_t) * torch.eye(self.E_classes, device=device)  # (bs, de, de)
-        q_e_2 = beta_t.unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)  # (bs, n, n, de, de)
-        q_e = q_e_1.unsqueeze(1).unsqueeze(1) + q_e_2
-
-        diag = torch.eye(E_T.shape[1], dtype=torch.bool).unsqueeze(0).expand(E_T.shape[0], -1, -1)
-        q_e[diag] = torch.eye(q_e.shape[-1], device=device)
-
-        edge_mask = node_mask[:, None, :] & node_mask[:, :, None]
-        q_e[~edge_mask] = torch.eye(q_e.shape[-1], device=device)
+        # edges
+        q_e_1 = (1 - beta_t) * torch.eye(self.E_classes, device=device)                # (bs,de,de)
+        q_e_2 = beta_t.unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)  # (bs,n,n,de,de)
+        q_e = q_e_1.unsqueeze(1).unsqueeze(1) + q_e_2                                   # (bs,n,n,de,de)
+        q_e = self._apply_edge_mask_identity(q_e, node_mask.to(torch.bool), device)
 
         return utils.PlaceHolder(X=q_x, E=q_e, y=y_T)
 
     def get_Qt_bar(self, alpha_bar_t, X_T, E_T, y_T, node_mask, device):
-        """
-        alpha_bar_t: (bs, 1)
-        X_T: (bs, n, dx)
-        E_T: (bs, n, n, de)
-        y_T: (bs, dy)
+        alpha_bar_t = alpha_bar_t.unsqueeze(1).to(device)  # (bs,1)
 
-        Returns transition matrices for X, E, and y
-        """
-        alpha_bar_t = alpha_bar_t.unsqueeze(1)  # (bs, 1, 1)
-        alpha_bar_t = alpha_bar_t.to(device)
-
-        q_x_1 = alpha_bar_t * torch.eye(self.X_classes, device=device)  # (bs, dx, dx)
-        q_x_2 = (1 - alpha_bar_t).unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)  # (bs, n, dx, dx)
+        # nodes
+        q_x_1 = alpha_bar_t * torch.eye(self.X_classes, device=device)
+        q_x_2 = (1 - alpha_bar_t).unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)
         q_x = q_x_1.unsqueeze(1) + q_x_2
-        q_x[~node_mask] = torch.eye(q_x.shape[-1], device=device)
+        q_x = self._apply_node_mask_identity(q_x, node_mask, device)
 
-        q_e_1 = alpha_bar_t * torch.eye(self.E_classes, device=device)  # (bs, de, de)
-        q_e_2 = (1 - alpha_bar_t).unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)  # (bs, n, n, de, de)
+        # edges
+        q_e_1 = alpha_bar_t * torch.eye(self.E_classes, device=device)
+        q_e_2 = (1 - alpha_bar_t).unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)
         q_e = q_e_1.unsqueeze(1).unsqueeze(1) + q_e_2
-
-        diag = torch.eye(E_T.shape[1], dtype=torch.bool).unsqueeze(0).expand(E_T.shape[0], -1, -1)
-        q_e[diag] = torch.eye(q_e.shape[-1], device=device)
-
-        edge_mask = node_mask[:, None, :] & node_mask[:, :, None]
-        q_e[~edge_mask] = torch.eye(q_e.shape[-1], device=device)
-
-        return utils.PlaceHolder(X=q_x, E=q_e, y=y_T)
-
-
-class InterpolationTransition:
-    def __init__(self, x_classes: int, e_classes: int, y_classes: int):
-        self.X_classes = x_classes
-        self.E_classes = e_classes
-        self.y_classes = y_classes
-
-    def get_Qt(self, beta_t, X_T, E_T, y_T, node_mask, device):
-        """X_T (bs, n, dx), E_T (bs, n, n, de)"""
-        """ Returns two transition matrix for X and E"""
-
-        beta_t = beta_t.unsqueeze(1)  # (bs, 1, 1)
-        beta_t = beta_t.to(device)
-
-        q_x_1 = (1 - beta_t) * torch.eye(self.X_classes, device=device)  # (bs, dx, dx)
-        q_x_2 = beta_t.unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)  # (bs, n, dx, dx)
-        q_x = q_x_1.unsqueeze(1) + q_x_2
-        q_x[~node_mask] = torch.eye(q_x.shape[-1], device=device)
-
-        q_e_1 = (1 - beta_t) * torch.eye(self.E_classes, device=device)  # (bs, de, de)
-        q_e_2 = beta_t.unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)  # (bs, n, n, de, de)
-        q_e = q_e_1.unsqueeze(1).unsqueeze(1) + q_e_2
-
-        diag = torch.eye(E_T.shape[1], dtype=torch.bool).unsqueeze(0).expand(E_T.shape[0], -1, -1)
-        q_e[diag] = torch.eye(q_e.shape[-1], device=device)
-
-        edge_mask = node_mask[:, None, :] & node_mask[:, :, None]
-        q_e[~edge_mask] = torch.eye(q_e.shape[-1], device=device)
-
-        return utils.PlaceHolder(X=q_x, E=q_e, y=y_T)
-
-    def get_Qt_bar(self, alpha_bar_t, X_T, E_T, y_T, node_mask, device):
-        """
-        alpha_bar_t: (bs, 1)
-        X_T: (bs, n, dx)
-        E_T: (bs, n, n, de)
-        y_T: (bs, dy)
-
-        Returns transition matrices for X, E, and y
-        """
-        alpha_bar_t = alpha_bar_t.unsqueeze(1)  # (bs, 1, 1)
-        alpha_bar_t = alpha_bar_t.to(device)
-
-        q_x_1 = alpha_bar_t * torch.eye(self.X_classes, device=device)  # (bs, dx, dx)
-        q_x_2 = (1 - alpha_bar_t).unsqueeze(-1) * torch.ones_like(X_T).unsqueeze(-1) * X_T.unsqueeze(-2)  # (bs, n, dx, dx)
-        q_x = q_x_1.unsqueeze(1) + q_x_2
-        q_x[~node_mask] = torch.eye(q_x.shape[-1], device=device)
-
-        q_e_1 = alpha_bar_t * torch.eye(self.E_classes, device=device)  # (bs, de, de)
-        q_e_2 = (1 - alpha_bar_t).unsqueeze(-1).unsqueeze(-1) * torch.ones_like(E_T).unsqueeze(-1) * E_T.unsqueeze(-2)  # (bs, n, n, de, de)
-        q_e = q_e_1.unsqueeze(1).unsqueeze(1) + q_e_2
-
-        diag = torch.eye(E_T.shape[1], dtype=torch.bool).unsqueeze(0).expand(E_T.shape[0], -1, -1)
-        q_e[diag] = torch.eye(q_e.shape[-1], device=device)
-
-        edge_mask = node_mask[:, None, :] & node_mask[:, :, None]
-        q_e[~edge_mask] = torch.eye(q_e.shape[-1], device=device)
+        q_e = self._apply_edge_mask_identity(q_e, node_mask.to(torch.bool), device)
 
         return utils.PlaceHolder(X=q_x, E=q_e, y=y_T)

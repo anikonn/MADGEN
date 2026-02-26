@@ -2,7 +2,19 @@
 
 <a href="https://openreview.net/forum?id=78tc3EiUrN"><img src="https://img.shields.io/badge/ICLR-2025-brown.svg" height=22.5></a>
 
+This repository is based on:
+
 Official implementation of [**MADGEN: Mass-Spec attends to De Novo Molecular generation**](https://openreview.net/forum?id=78tc3EiUrN) by Yinkai Wang, Xiaohui Chen, Liping Liu, and Soha Hassoun.
+
+Modifications by Anastasiia Kolchina:
+- added additional parameters to the MADGEN inference (--delete_test_cache deletes processed data, which might intervene with subsequent runs, and --msgym_pkl and --ranks_pkl allows to provide paths to the data instead of changing the .yaml file)
+- attempted to implement consistency of results for a fixed seed using different fixing techniques
+
+How to run modified MADGEN:
+
+```
+python sample.py --config configs/msgym.yaml --checkpoint checkpoints/msgym.ckpt --samples samples --model Madgen --mode test --n_samples 100 --n_steps 100 --table_name authors_baseline_pred --sampling_seed 42 --msgym_pkl data/msgym/raw/msgym.pkl --ranks_pkl data/msgym/raw/ranks_msgym_pred.pkl --delete_test_cache
+```
 
 <img src="assets/madgen.png" alt="MADGEN Architecture" width="800">
 
