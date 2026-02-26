@@ -16,6 +16,18 @@ How to run modified MADGEN:
 python sample.py --config configs/msgym.yaml --checkpoint checkpoints/msgym.ckpt --samples samples --model Madgen --mode test --n_samples 100 --n_steps 100 --table_name authors_baseline_pred --sampling_seed 42 --msgym_pkl data/msgym/raw/msgym.pkl --ranks_pkl data/msgym/raw/ranks_msgym_pred.pkl --delete_test_cache
 ```
 
+If you get ImportError: /lib64/libstdc++.so.6: version `GLIBCXX_3.4.29' not found mistake, inside madgen environment:
+
+```
+conda install -c conda-forge "libstdcxx-ng>=12" "libgcc-ng>=12"
+```
+
+Before every run do:
+
+```
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+```
+
 <img src="assets/madgen.png" alt="MADGEN Architecture" width="800">
 
 ## 📋 Table of Contents
