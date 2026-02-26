@@ -1,8 +1,10 @@
+import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
-import os
 
 from src.data import utils
 from src.frameworks.noise_schedule import InterpolationTransition, PredefinedNoiseScheduleDiscrete
@@ -16,7 +18,6 @@ from tqdm import tqdm
 import numpy as np
 from rdkit import Chem
 from pdb import set_trace
-torch.set_float32_matmul_precision('medium')
 
 
 class MarkovBridge(pl.LightningModule):
@@ -92,6 +93,10 @@ class MarkovBridge(pl.LightningModule):
         self.extra_features = extra_features
         self.domain_features = domain_features
         self.use_context = use_context
+        
+        self._gen = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
+        # set its seed from your main seed after constructing the model
+        self._gen.manual_seed(42)
 
         self.model = GraphTransformer(
             n_layers=n_layers,
@@ -392,7 +397,7 @@ class MarkovBridge(pl.LightningModule):
         # When evaluating, the loss for t=0 is computed separately
         lowest_t = 0 if self.training else 1
         if t_int == None:   
-            t_int = torch.randint(lowest_t, self.T + 1, size=(X.size(0), 1), device=X.device).float()  # (bs, 1)
+            t_int = torch.randint(lowest_t, self.T + 1, (X.size(0), 1), device=X.device, generator=self._gen).float()
         s_int = t_int - 1
 
         t_float = t_int / self.T
@@ -419,7 +424,10 @@ class MarkovBridge(pl.LightningModule):
         probX = (X.unsqueeze(-2) @ Qtb.X).squeeze(-2)  # (bs, n, dx_out)
         probE = (E.unsqueeze(-2) @ Qtb.E).squeeze(-2)  # (bs, n, n, de_out)
 
-        sampled_t,score = diffusion_utils.sample_discrete_features(probX=probX, probE=probE, node_mask=node_mask)
+        sampled_t, score = diffusion_utils.sample_discrete_features(
+            probX=probX, probE=probE, node_mask=node_mask,
+            generator=None  # it will use the global one we set
+        )
 
         X_t = F.one_hot(sampled_t.X, num_classes=self.Xdim_output)
         E_t = F.one_hot(sampled_t.E, num_classes=self.Edim_output)
@@ -665,12 +673,17 @@ class MarkovBridge(pl.LightningModule):
         molecule_list = utils.create_pred_target_molecules(X, E, data.batch, batch_size)
         # torch.save(molecule_list, f'sampled_s.pt')
         # exit()
+        # Replace NaN/inf with large finite sentinels so CSV never writes blanks
+        nll = torch.nan_to_num(nll, nan=0.0, posinf=1e9,  neginf=-1e9)
+        ell = torch.nan_to_num(ell, nan=0.0, posinf=1e9,  neginf=-1e9)
+
         return (
             chain_X, chain_E, r_chain_X, r_chain_E, true_molecule_list, scaffolds_list, molecule_list, pred, score,
             nll.detach().cpu().numpy().tolist(),
             ell.detach().cpu().numpy().tolist(),
         )
-
+        
+        
     def visualize(
             self,
             chain_X,
@@ -763,8 +776,11 @@ class MarkovBridge(pl.LightningModule):
         assert ((prob_X.sum(dim=-1) - 1).abs() < 1e-4).all()
         assert ((prob_E.sum(dim=-1) - 1).abs() < 1e-4).all()
         
-        sampled_s, score = diffusion_utils.sample_discrete_features(prob_X, prob_E, node_mask=node_mask)
-
+        sampled_s, score = diffusion_utils.sample_discrete_features(
+            prob_X, prob_E, node_mask=node_mask,
+            generator=None  # use global gen
+        )
+        
         X_s = F.one_hot(sampled_s.X, num_classes=self.Xdim_output).float()
         E_s = F.one_hot(sampled_s.E, num_classes=self.Edim_output).float()
 
@@ -774,12 +790,19 @@ class MarkovBridge(pl.LightningModule):
         out_one_hot = utils.PlaceHolder(X=X_t, E=E_s, y=torch.zeros(y_t.shape[0], 0))
         out_discrete = utils.PlaceHolder(X=X_t, E=E_s, y=torch.zeros(y_t.shape[0], 0))
 
-        # Likelihood
-        node_log_likelihood = torch.log(prob_X) + torch.log(pred_X)
+        # ---- Likelihood (safe)
+        eps = 1e-12
+        # ensure strictly positive probs before logs
+        prob_X_safe = prob_X.clamp_min(eps)
+        prob_E_safe = prob_E.clamp_min(eps)
+        pred_X_safe = pred_X.clamp_min(eps)
+        pred_E_safe = pred_E.clamp_min(eps)
+
+        node_log_likelihood = (torch.log(prob_X_safe) + torch.log(pred_X_safe))
         node_log_likelihood = (node_log_likelihood * X_s).sum(-1).sum(-1)
 
-        edge_log_likelihood = torch.log(prob_E) + torch.log(pred_E)
-        edge_log_likelihood = (edge_log_likelihood * E_s).sum(-1).sum(-1).sum(-1) # bxnxnxK
+        edge_log_likelihood = (torch.log(prob_E_safe) + torch.log(pred_E_safe))
+        edge_log_likelihood = (edge_log_likelihood * E_s).sum(-1).sum(-1).sum(-1)
 
         return (
             out_one_hot.mask(node_mask).type_as(y_t),

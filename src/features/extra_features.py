@@ -1,6 +1,10 @@
+import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import torch
 
 from src.data import utils
+from src.frameworks import diffusion_utils
 
 
 class DummyExtraFeatures:
@@ -168,7 +172,9 @@ def get_eigenvectors_features(vectors, node_mask, n_connected, k=2):
     # Create an indicator for the nodes outside the largest connected components
     first_ev = torch.round(vectors[:, :, 0], decimals=3) * node_mask                        # bs, n
     # Add random value to the mask to prevent 0 from becoming the mode
-    random = torch.randn(bs, n, device=node_mask.device) * (~node_mask)                                   # bs, n
+    eps = (torch.arange(n, device=node_mask.device, dtype=first_ev.dtype) + 1) / (n + 1)
+    eps = eps.unsqueeze(0).expand(bs, -1)
+    random = eps * (~node_mask)                              # bs, n
     first_ev = first_ev + random
     most_common = torch.mode(first_ev, dim=1).values                                    # values: bs -- indices: bs
     mask = ~ (first_ev == most_common.unsqueeze(1))

@@ -1,5 +1,7 @@
 import pickle
 import os
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import pathlib
 import re
 
@@ -16,6 +18,7 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 from rdkit import Chem, RDLogger
 from rdkit.Chem.rdchem import BondType as BT
 from rdkit.Chem import rdFMCS
+from rdkit.Chem.MolStandardize import rdMolStandardize
 
 import torch
 import torch.nn.functional as F
@@ -28,6 +31,8 @@ from src.data import utils
 from src.analysis.rdkit_functions import mol2smiles, build_molecule_with_partial_charges
 from src.data.abstract_dataset import MolecularDataModule, AbstractDatasetInfos
 
+from src.utils import make_worker_init_fn, make_torch_generator
+
 def to_list(value: Any) -> Sequence:
     if isinstance(value, Sequence) and not isinstance(value, str):
         return value
@@ -35,6 +40,7 @@ def to_list(value: Any) -> Sequence:
         return [value]
 
 atom_decoder = ['N', 'P', 'B', 'I', 'As', 'Se', 'Cl', 'C', 'F', 'S', 'Br', 'O', 'Si']
+_LF = rdMolStandardize.LargestFragmentChooser()
 
 class MsGymDataset(InMemoryDataset):
     types = {'N': 0, 'P': 1, 'B': 2, 'I': 3, 'As': 4, 'Se': 5, 'Cl': 6, 'C': 7, 'F': 8, 'S': 9, 'Br': 10, 'O': 11, 'Si': 12}
@@ -46,10 +52,12 @@ class MsGymDataset(InMemoryDataset):
         Chem.BondType.AROMATIC: 3
     }
 
-    def __init__(self, stage, root, transform=None, pre_transform=None, pre_filter=None, preprocess=False):
+    def __init__(self, stage, root, transform=None, pre_transform=None, pre_filter=None, preprocess=False, msgym_pkl_path=None, ranks_pkl_path=None):
         self.stage = stage
         self.atom_decoder = atom_decoder
         self.remove_h = True
+        self.msgym_pkl_path = msgym_pkl_path
+        self.ranks_pkl_path = ranks_pkl_path
         if self.stage == 'train':
             self.file_idx = 0
         elif self.stage == 'val':
@@ -104,9 +112,16 @@ class MsGymDataset(InMemoryDataset):
     def process(self):
         preprocess = self.preprocess
         RDLogger.DisableLog('rdApp.*')
-        ms_dict = pickle.load(open('./data/msgym/raw/msgym.pkl', 'rb'))
+        
+        default_msgym = './data/msgym/raw/msgym.pkl'
+        msgym_path = self.msgym_pkl_path or default_msgym
+        ms_dict = pickle.load(open(msgym_path, 'rb'))
+
         if self.stage =='test':
-            sca_dict = pickle.load(open('./data/msgym/raw/ranks_msgym_pred.pkl', 'rb'))
+            if self.ranks_pkl_path is None:
+                default_ranks = './data/msgym/raw/ranks_msgym_pred.pkl'
+                self.ranks_pkl_path = default_ranks
+            sca_dict = pickle.load(open(self.ranks_pkl_path, 'rb'))
             # sca_dict = {ele[1]: Chem.MolToSmiles(Chem.MolFromSmarts(ele[4][0])) for ele in sca_list}
         else:
             sca_dict = None
@@ -165,13 +180,17 @@ class MsGymDataset(InMemoryDataset):
 class MsGymDataModule(MolecularDataModule):
     DATASET_CLASS = MsGymDataset
 
-    def __init__(self, data_root, batch_size, num_workers, shuffle, extra_nodes=False, evaluation=False, swap=False):
+    def __init__(self, data_root, batch_size, num_workers, shuffle, extra_nodes=False, evaluation=True, swap=False, msgym_pkl=None, ranks_pkl=None, seed=42):
         super().__init__(batch_size, num_workers, shuffle)
         self.extra_nodes = extra_nodes
         self.evaluation = evaluation
         self.swap = swap
         self.data_root = data_root
-        self.train_smiles = []
+        if not self.evaluation:
+            self.train_smiles = []
+        self.msgym_pkl = msgym_pkl
+        self.ranks_pkl = ranks_pkl
+        self.seed = seed 
         self.prepare_data()
         self.preprocess = False
         
@@ -183,11 +202,22 @@ class MsGymDataModule(MolecularDataModule):
         base_path = pathlib.Path(os.path.realpath(__file__)).parents[2]
         root_path = os.path.join(base_path, self.data_root)
 
-        datasets = {
-            'train': MsGymDataset(stage='train', root=root_path, preprocess=False),
-            'val': MsGymDataset(stage='val', root=root_path, preprocess=False),
-            'test': MsGymDataset(stage='test', root=root_path, preprocess=False)
-        }
+        if self.evaluation:
+            datasets = {
+                'test': MsGymDataset(stage='test', root=root_path, preprocess=False,
+                                    msgym_pkl_path=self.msgym_pkl, ranks_pkl_path=self.ranks_pkl)
+            }
+        else:
+            datasets = {
+                'train': MsGymDataset(stage='train', root=root_path, preprocess=False,
+                                    msgym_pkl_path=self.msgym_pkl, ranks_pkl_path=None),
+                'val': MsGymDataset(stage='val', root=root_path, preprocess=False,
+                                    msgym_pkl_path=self.msgym_pkl, ranks_pkl_path=None),
+                'test': MsGymDataset(stage='test', root=root_path, preprocess=False,
+                                    msgym_pkl_path=self.msgym_pkl, ranks_pkl_path=self.ranks_pkl),
+            }
+        wif   = make_worker_init_fn(self.seed)
+        dlgen = make_torch_generator(self.seed)
         self.dataloaders = {}
         for split, dataset in datasets.items():
             self.dataloaders[split] = DataLoader(
@@ -195,9 +225,14 @@ class MsGymDataModule(MolecularDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 shuffle=(self.shuffle and split == 'train'),
+                worker_init_fn=wif,                       # <<< add
+                generator=dlgen,
+                persistent_workers=(self.num_workers > 0),
+                pin_memory=True
             )
         print(len(datasets['test']))
-        self.train_smiles = datasets['train'].r_smiles
+        if not self.evaluation:
+            self.train_smiles = datasets['train'].r_smiles
 
 class MsGyminfos(AbstractDatasetInfos):
     max_n_dummy_nodes = 10
@@ -312,6 +347,10 @@ def align_molecular_node_features(pyg1, pyg2, atom_decoder):
 
 def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[], use_scaffold=True, source='train'):
     mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    # leave only main fragment
+    mol = _LF.choose(mol)
     mol = Chem.RemoveAllHs(mol)
     atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
     pyg_graph = molecule_to_pyg_graph(mol, atom_decoder, smiles, ms)
@@ -319,12 +358,19 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
         if sca_dict != None:
             try:    
                 p_mol = Chem.MolFromSmiles(sca_dict[key_list[i]])
-            except:
+            except Exception:
                 return None
+            if p_mol is None:
+                return None
+            # largest fragment
+            p_mol = _LF.choose(p_mol)
         else:
             p_mol = mol
         # pyg_graph = molecule_to_pyg_graph(p_mol, atom_decoder, smiles, ms, key_list[i])
         scaffold = GetScaffoldForMol(p_mol)
+        if scaffold is None:
+            return None
+        scaffold = _LF.choose(scaffold) # largest fragment too
         scaffold = add_missing_atoms(scaffold, atoms)
         scaffold_g = molecule_to_pyg_graph(scaffold, atom_decoder, smiles, ms)
         if scaffold_g == None:
@@ -337,8 +383,10 @@ def create_scaffold_graph(smiles, atom_decoder, i, ms, sca_dict=None, key_list=[
         scaffold_x = scaffold_g.x
     else:
         scaffold = GetScaffoldForMol(mol)
-        if scaffold == None:
+        if scaffold is None:
             return None
+        # largest fragment
+        scaffold = _LF.choose(scaffold)
         scaffold_nodes = align_scaffold_to_molecule(mol, scaffold)
         # Create a mask for edges that only connect nodes within the scaffold
         edge_start, edge_end = pyg_graph.edge_index

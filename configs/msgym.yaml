@@ -20,8 +20,8 @@ enable_progress_bar: True
 # Data
 dataset: msgym
 batch_size: 256
-num_workers: 47
-shuffle: True
+num_workers: 16
+shuffle: False
 extra_nodes: True
 swap: False
 
